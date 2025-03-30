@@ -1241,7 +1241,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-router.get('/setup-workspace', isAuthenticated, (req, res) => {
+router.get('/setup-workspace', isAuthenticated, async (req, res) => {
     const isAdminOrModerator = req.session.user.role === 'Admin' || req.session.user.role === 'Moderator';
     
     if (!isAdminOrModerator) {
@@ -1249,7 +1249,9 @@ router.get('/setup-workspace', isAuthenticated, (req, res) => {
     }
 
     const redirectUrl = req.session.user.role === 'Admin' ? '/admin/dashboard' : '/moderator/dashboard';
-    res.render('setup-workspace', { redirectUrl, path: '/setup-workspace' });
+    // Fetch necessary data asynchronously
+    const data = await fetchDataForWorkspace();
+    res.render('setup-workspace', { redirectUrl, path: '/setup-workspace', data });
 });
 
 // Login attempts live filter endpoint
