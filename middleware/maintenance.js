@@ -3,9 +3,28 @@ const MaintenanceMode = require('../models/MaintenanceMode');
 const MaintenanceVisitor = require('../models/MaintenanceVisitor');
 const requestIp = require('request-ip');
 
+const retryOperation = async (operation, maxRetries = 3, delay = 1000) => {
+    let lastError;
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            return await operation();
+        } catch (error) {
+            lastError = error;
+            if (error.code === 'ECONNRESET') {
+                await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+                continue;
+            }
+            throw error;
+        }
+    }
+    throw lastError;
+};
+
 const maintenanceCheck = async (req, res, next) => {
     try {
-        const maintenance = await MaintenanceMode.findOne({ isEnabled: true });
+        const maintenance = await retryOperation(
+            () => MaintenanceMode.findOne({ isEnabled: true }).maxTimeMS(2000)
+        );
         
         // Track visitor if maintenance is enabled
         if (maintenance?.isEnabled) {
@@ -18,7 +37,9 @@ const maintenanceCheck = async (req, res, next) => {
             };
             
             try {
-                await MaintenanceVisitor.create(visitorData);
+                await retryOperation(
+                    () => MaintenanceVisitor.create(visitorData)
+                );
             } catch (error) {
                 console.error('Error tracking visitor:', error);
             }
@@ -47,7 +68,7 @@ const maintenanceCheck = async (req, res, next) => {
         });
 
         // For non-admin routes and users, check maintenance mode with timeout
-        const maintenancePromise = MaintenanceMode.findOne({ isEnabled: true }).exec();
+        const maintenancePromise = MaintenanceMode.findOne({ isEnabled: true }).maxTimeMS(2000).exec();
         
         try {
             // Race the database query against the timeout
