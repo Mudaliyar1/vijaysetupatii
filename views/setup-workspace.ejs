@@ -84,8 +84,7 @@
                 updateConnectionStatus(lastLatency);
                 
                 // Adjust progress increment based on connection quality
-                progressIncrement = connectionQuality === 'good' ? 2 : 
-                                  connectionQuality === 'medium' ? 1 : 0.5;
+                progressIncrement = connectionQuality === 'good' ? getRandomProgress(5, 10) : connectionQuality === 'medium' ? getRandomProgress(1, 2) : getRandomProgress(0.5, 1);
                 
                 return lastLatency;
             } catch (error) {
