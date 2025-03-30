@@ -1,21 +1,37 @@
 const mongoose = require('mongoose');
 
 const movieSchema = new mongoose.Schema({
-    title: String,
-    description: String,
-    releaseDate: Date,
-    genre: String,
-    duration: Number, // Duration in minutes
-    image: String, // URL of the movie poster
-    director: String,
-    cast: [String], // Array of cast members
-    proposedChanges: {
-        type: Object,
-        default: null
+    title: {
+        type: String,
+        required: true
     },
-    approved: {
-        type: Boolean,
-        default: true
+    description: {
+        type: String,
+        required: true
+    },
+    genre: {
+        type: String,
+        required: true
+    },
+    releaseDate: {
+        type: Date,
+        required: true
+    },
+    duration: {
+        type: Number,
+        required: true
+    },
+    image: String,
+    director: String,
+    cast: [String],
+    language: String,
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
     }
 });
 

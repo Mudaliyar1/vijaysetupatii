@@ -6,6 +6,8 @@ const Message = require('./Message');
 const Post = require('./Post');
 const Notification = require('./Notification');
 const Request = require('./Request');
+const MaintenanceLoginAttempt = require('./MaintenanceLoginAttempt');
+const MaintenanceVisitor = require('./MaintenanceVisitor');
 
 module.exports = {
     User,
@@ -15,5 +17,7 @@ module.exports = {
     Message,
     Post,
     Notification,
-    Request
+    Request,
+    MaintenanceLoginAttempt,
+    MaintenanceVisitor
 };
