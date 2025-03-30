@@ -1,13 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const Movie = require('../models/Movie');
-const Award = require('../models/Award'); // Import Award model
-const Message = require('../models/Message'); // Import Message model
-const User = require('../models/User'); // Import User model
-const Post = require('../models/Post'); // Import Post model
-const Notification = require('../models/Notification'); // Import Notification model
-const MaintenanceMode = require('../models/MaintenanceMode'); // Import MaintenanceMode model
-const { isAuthenticated, isUser } = require('../middleware/auth'); // Import authentication middleware
+const path = require('path');
+const Movie = require(path.join(__dirname, '..', 'models', 'Movie'));
+const Award = require(path.join(__dirname, '..', 'models', 'Award'));
+const Message = require(path.join(__dirname, '..', 'models', 'Message'));
+const User = require(path.join(__dirname, '..', 'models', 'User'));
+const Post = require(path.join(__dirname, '..', 'models', 'Post'));
+const Notification = require(path.join(__dirname, '..', 'models', 'Notification'));
+const MaintenanceMode = require(path.join(__dirname, '..', 'models', 'MaintenanceMode'));
+const { isAuthenticated, isUser } = require(path.join(__dirname, '..', 'middleware', 'auth'));
 const methodOverride = require('method-override');
 const mongoose = require('mongoose');
 router.use(methodOverride('_method'));

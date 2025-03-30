@@ -2,8 +2,11 @@ services:
   - type: web
     name: vijaysetupatii
     env: node
-    buildCommand: npm install
-    startCommand: node server.js
+    buildCommand: |
+      npm install
+      chmod +x build.sh
+      ./build.sh
+    startCommand: cd dist && node server.js
     envVars:
       - key: NODE_ENV
         value: production
