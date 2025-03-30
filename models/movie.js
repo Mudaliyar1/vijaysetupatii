@@ -12,8 +12,7 @@ const movieSchema = new mongoose.Schema({
     },
     genre: {
         type: String,
-        required: true,
-        trim: true
+        required: true
     },
     releaseDate: {
         type: Date,
@@ -30,26 +29,29 @@ const movieSchema = new mongoose.Schema({
     },
     director: {
         type: String,
-        required: true,
-        trim: true
+        required: true
     },
     language: {
         type: String,
-        required: true,
-        trim: true
-    },
-    cast: [{
-        type: String,
-        trim: true
-    }],
-    createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
         required: true
     },
-    updatedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+    cast: {
+        type: [String],
+        required: true,
+        validate: {
+            validator: function(v) {
+                return v.length > 0;
+            },
+            message: 'At least one cast member is required'
+        }
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
     }
 }, { timestamps: true });
 

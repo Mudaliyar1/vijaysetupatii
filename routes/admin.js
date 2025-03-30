@@ -7,7 +7,7 @@ const he = require('he'); // Import he for encoding
 const requestIp = require('request-ip'); // Add this after existing imports
 
 // Import all required models
-const Movie = require('../models/Movie');
+const Movie = require('../models/movie');
 const Award = require('../models/Award');
 const User = require('../models/User');
 const Request = require('../models/Request');

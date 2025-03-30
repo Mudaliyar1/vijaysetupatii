@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { isAuthenticated, isModerator } = require('../middleware/auth');
 const Request = require('../models/Request');
-const Movie = require('../models/Movie');
+const Movie = require('../models/movie');
 const Award = require('../models/Award');
 const Message = require('../models/Message');
 

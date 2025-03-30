@@ -1,6 +1,6 @@
 const User = require('./User');
 const MaintenanceMode = require('./MaintenanceMode');
-const Movie = require('./Movie');
+const Movie = require('./movie');
 const Award = require('./Award');
 const Message = require('./Message');
 const Post = require('./Post');
