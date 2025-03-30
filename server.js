@@ -67,10 +67,14 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production' ? true : false,
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
 }));
+
+// Trust proxy - required for secure cookies to work behind a proxy like Render
+app.set('trust proxy', 1);
 
 // MongoDB connection with improved error handling and retry logic
 const connectWithRetry = () => {
