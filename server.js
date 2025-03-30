@@ -13,7 +13,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
-app.use(bodyParser.json()); // Add this line as backup
+app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
@@ -21,10 +21,8 @@ app.set('view engine', 'ejs');
 const maintenanceCheck = require('./middleware/maintenance');
 const responseHelper = require('./middleware/responseHelper');
 
-// Add response helpers (single instance)
-app.use(responseHelper);
-
-// Add maintenance check middleware
+// Add middleware (ensure they are functions)
+app.use(responseHelper); // This middleware is now properly exported as a function
 app.use(maintenanceCheck);
 
 // Session setup with MongoDB store
