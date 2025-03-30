@@ -12,5 +12,6 @@ const movieSchema = new mongoose.Schema({
     language: { type: String, trim: true }
 }, { timestamps: true });
 
+// Export with consistent naming
 const Movie = mongoose.models.Movie || mongoose.model('Movie', movieSchema);
 module.exports = Movie;

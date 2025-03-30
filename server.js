@@ -175,11 +175,25 @@ app.post('/register', async (req, res) => {
 // Add requestIp middleware before your routes
 app.use(requestIp.mw());
 
-// Routes setup
-app.use('/', require('./routes/public'));
-app.use('/auth', require('./routes/auth'));
-app.use('/admin', require('./routes/admin'));
-app.use('/moderator', require('./routes/moderator'));
+// Add this before loading routes
+try {
+    const models = require('./models');
+    const Movie = models.Movie;
+    
+    if (!Movie) {
+        console.warn('Movie model not found, attempting to load directly');
+        require('./models/Movie');
+    }
+    
+    // Continue with route loading
+    app.use('/', require('./routes/public'));
+    app.use('/auth', require('./routes/auth'));
+    app.use('/admin', require('./routes/admin'));
+    app.use('/moderator', require('./routes/moderator'));
+} catch (error) {
+    console.error('Error loading models:', error);
+    process.exit(1);
+}
 
 // Setup workspace route
 app.get('/setup-workspace', isAuthenticated, (req, res) => {
