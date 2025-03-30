@@ -5,6 +5,7 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 const path = require('path');
 const methodOverride = require('method-override');
+const MongoStore = require('connect-mongo');
 
 const app = express();
 
@@ -26,11 +27,14 @@ app.use(responseHelper);
 // Add maintenance check middleware
 app.use(maintenanceCheck);
 
-// Session setup
+// Session setup with MongoDB store
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    secret: process.env.SESSION_SECRET || 'your_secret_key',
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI
+    }),
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
@@ -38,11 +42,15 @@ app.use(session({
 }));
 
 // MongoDB connection
-mongoose.connect(process.env.MONGO_URI, {
+mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
-}).then(() => console.log('MongoDB connected'))
-  .catch(err => console.log(err));
+}).then(() => {
+    console.log('Connected to MongoDB');
+}).catch(err => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1); // Exit if cannot connect to database
+});
 
 // MongoDB models
 const Request = require('./models/Request'); // Model for Moderator requests
@@ -207,6 +215,17 @@ app.post('/admin/requests/:id/reject', isAuthenticated, isAdmin, async (req, res
     } catch (err) {
         res.status(500).send('Error rejecting request');
     }
+});
+
+// Error handling
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Something broke!');
+});
+
+// 404 handler
+app.use((req, res) => {
+    res.status(404).render('404', { user: req.session.user || null });
 });
 
 // Start server

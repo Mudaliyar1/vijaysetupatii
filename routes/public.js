@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Movie = require('../models/Movie'); // Import Movie model
+const Movie = require('../models/Movie');
 const Award = require('../models/Award'); // Import Award model
 const Message = require('../models/Message'); // Import Message model
 const User = require('../models/User'); // Import User model
@@ -68,8 +68,12 @@ router.get('/about', (req, res) => {
     res.render('about', { user: req.session.user || null });
 });
 router.get('/movies', async (req, res) => {
-    const movies = await Movie.find(); // Fetch movies from the database
-    res.render('movies', { movies, user: req.session.user || null });
+    try {
+        const movies = await Movie.find();
+        res.json(movies);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 });
 router.get('/movies/:id', async (req, res) => {
     const movie = await Movie.findById(req.params.id);

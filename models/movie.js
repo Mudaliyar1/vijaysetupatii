@@ -1,9 +1,18 @@
 const mongoose = require('mongoose');
 
 const movieSchema = new mongoose.Schema({
-    title: String,
-    description: String,
-    releaseDate: Date,
+    title: {
+        type: String,
+        required: true
+    },
+    description: {
+        type: String,
+        required: true
+    },
+    releaseDate: {
+        type: Date,
+        default: Date.now
+    },
     genre: String,
     duration: Number, // Duration in minutes
     image: String, // URL of the movie poster
