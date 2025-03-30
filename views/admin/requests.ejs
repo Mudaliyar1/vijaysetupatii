@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <%- include('../partials/admin-header', { title: 'Request Management', user: user }) %>
+    <main class="p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-semibold">Moderator Requests</h2>
+            <div class="flex space-x-4">
+                <div class="relative">
+                    <input type="text" 
+                           id="searchRequests"
+                           placeholder="Search requests..."
+                           class="bg-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <svg class="w-5 h-5 absolute right-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+                <select id="statusFilter" class="bg-gray-700 rounded-lg px-4 py-2">
+                    <option value="all">All Status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="space-y-4" id="requestsList">
+            <% requests.forEach(request => { %>
+                <div class="request-item bg-gray-800 p-4 md:p-6 rounded-lg shadow-lg" 
+                     data-status="<%= request.status %>"
+                     data-type="<%= request.type %>"
+                     data-user="<%= request.createdBy ? request.createdBy.username : 'Unknown' %>">
+                    <div class="flex flex-col md:flex-row justify-between items-start gap-4">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
+                                <h3 class="text-lg md:text-xl font-bold truncate max-w-full">
+                                    <%= request.type.replace(/_/g, ' ').toUpperCase() %>
+                                </h3>
+                                <span class="px-3 py-1 rounded-full text-sm whitespace-nowrap
+                                    <%= request.status === 'Pending' ? 'bg-yellow-500/20 text-yellow-400' : 
+                                       request.status === 'Approved' ? 'bg-green-500/20 text-green-400' : 
+                                       'bg-red-500/20 text-red-400' %>">
+                                    <%= request.status %>
+                                </span>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <p class="text-gray-400">Requested by:</p>
+                                    <p class="font-semibold truncate"><%= request.createdBy ? request.createdBy.username : 'Unknown User' %></p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400">Date:</p>
+                                    <p class="font-semibold"><%= new Date(request.createdAt).toLocaleString() %></p>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-700 p-4 rounded">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="font-semibold">Request Details:</h4>
+                                    <button onclick="viewDetails(`<%= JSON.stringify(request) %>`)" 
+                                            class="text-blue-400 hover:text-blue-300 text-sm">
+                                        View Details
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-hidden max-h-20">
+                                    <% if (request.type === 'movie_delete' || request.type === 'award_delete') { %>
+                                        <div class="col-span-2">
+                                            <p class="text-red-400">Requesting to delete:</p>
+                                            <p class="font-semibold truncate"><%= request.data.title %></p>
+                                        </div>
+                                    <% } else { %>
+                                        <% Object.entries(request.data).slice(0, 2).forEach(([key, value]) => { %>
+                                            <div class="truncate">
+                                                <span class="text-gray-400"><%= key %>:</span>
+                                                <span class="ml-2"><%= value %></span>
+                                            </div>
+                                        <% }) %>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+
+                        <% if (user.role === 'Admin') { %>
+                            <div class="flex md:flex-col space-x-2 md:space-x-0 md:space-y-2">
+                                <% if (request.status === 'Pending') { %>
+                                    <form action="/admin/requests/<%= request._id %>/approve" method="POST">
+                                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 px-4 py-2 rounded">
+                                            Approve
+                                        </button>
+                                    </form>
+                                    <form action="/admin/requests/<%= request._id %>/reject" method="POST">
+                                        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 px-4 py-2 rounded">
+                                            Reject
+                                        </button>
+                                    </form>
+                                <% } else if (request.status === 'Approved') { %>
+                                    <form action="/admin/requests/<%= request._id %>/undo" method="POST">
+                                        <button type="submit" class="w-full bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded">
+                                            Undo
+                                        </button>
+                                    </form>
+                                <% } %>
+                                <form action="/admin/requests/<%= request._id %>/delete" method="POST" 
+                                      onsubmit="return confirm('Are you sure you want to delete this request?')">
+                                    <button type="submit" class="w-full bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+
+        <!-- Details Modal -->
+        <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+            <div class="bg-gray-800 rounded-lg w-11/12 md:w-3/4 lg:w-1/2 mx-auto mt-20 p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-xl font-bold" id="modalTitle"></h3>
+                    <button onclick="closeDetails()" class="text-gray-400 hover:text-white">&times;</button>
+                </div>
+                <div id="modalContent" class="space-y-4"></div>
+            </div>
+        </div>
+    </main>
+    <footer class="p-4 bg-gray-800 text-center">
+        <p>&copy; 2023 Vijay Sethupathi. All rights reserved.</p>
+    </footer>
+    <script>
+        const hamburger = document.getElementById('hamburger');
+        const navbar = document.getElementById('navbar');
+        hamburger.addEventListener('click', () => {
+            navbar.classList.toggle('hidden');
+        });
+
+        function filterRequests() {
+            const searchText = document.getElementById('searchRequests').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const requests = document.querySelectorAll('.request-item');
+
+            requests.forEach(request => {
+                const type = request.dataset.type.toLowerCase();
+                const user = request.dataset.user.toLowerCase();
+                const status = request.dataset.status;
+                
+                const matchesSearch = type.includes(searchText) || user.includes(searchText);
+                const matchesStatus = statusFilter === 'all' || status === statusFilter;
+
+                request.style.display = matchesSearch && matchesStatus ? 'block' : 'none';
+            });
+        }
+
+        document.getElementById('searchRequests').addEventListener('input', filterRequests);
+        document.getElementById('statusFilter').addEventListener('change', filterRequests);
+
+        function viewDetails(requestData) {
+            try {
+                const request = JSON.parse(requestData);
+                const modal = document.getElementById('detailsModal');
+                const title = document.getElementById('modalTitle');
+                const content = document.getElementById('modalContent');
+
+                title.textContent = request.type.replace(/_/g, ' ').toUpperCase();
+
+                let detailsHtml = '';
+                
+                // Handle data object
+                if (request.data) {
+                    Object.entries(request.data).forEach(([key, value]) => {
+                        detailsHtml += `
+                            <div class="bg-gray-700 p-3 rounded">
+                                <span class="text-gray-400">${key}:</span>
+                                <div class="mt-1">
+                                    ${typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                // Add metadata
+                detailsHtml += `
+                    <div class="bg-gray-700 p-3 rounded mt-4">
+                        <span class="text-gray-400">Status:</span>
+                        <div class="mt-1">${request.status}</div>
+                    </div>
+                    <div class="bg-gray-700 p-3 rounded mt-4">
+                        <span class="text-gray-400">Created At:</span>
+                        <div class="mt-1">${new Date(request.createdAt).toLocaleString()}</div>
+                    </div>
+                `;
+
+                content.innerHTML = detailsHtml;
+                modal.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error parsing request data:', error);
+            }
+        }
+
+        function closeDetails() {
+            document.getElementById('detailsModal').classList.add('hidden');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('detailsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDetails();
+            }
+        });
+
+        // Close modal with escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !document.getElementById('detailsModal').classList.contains('hidden')) {
+                closeDetails();
+            }
+        });
+    </script>
+    <style>
+        .neon-text {
+            color: #0ff;
+            text-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 20px #0ff;
+        }
+    </style>
+</body>
+</html>

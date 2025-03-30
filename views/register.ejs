@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Vijay Sethupathi</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .hamburger-menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100%;
+            width: 250px;
+            background-color: #1f2937;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 50;
+        }
+
+        .hamburger-menu.active {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+    <header class="bg-gray-800 p-4 shadow-lg flex justify-between items-center">
+        <h1 class="text-3xl text-cyan-400 font-bold">Register</h1>
+        <button id="menuBtn" class="text-white text-3xl">&#9776;</button>
+    </header>
+
+    <!-- Hamburger Menu -->
+    <div id="menu" class="hamburger-menu">
+        <button id="closeBtn" class="text-white text-3xl p-4">&times;</button>
+        <nav class="mt-4 space-y-4 p-4">
+            <a href="/" class="block text-white hover:text-cyan-400">Home</a>
+            <a href="/about" class="block text-white hover:text-cyan-400">About</a>
+            <a href="/movies" class="block text-white hover:text-cyan-400">Movies</a>
+            <a href="/awards" class="block text-white hover:text-cyan-400">Awards</a>
+            <a href="/message" class="block text-white hover:text-cyan-400">Message</a>
+        </nav>
+    </div>
+
+    <main class="p-6">
+        <section class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6 max-w-md mx-auto">
+            <h2 class="text-2xl font-bold mb-4">Create Fan Account</h2>
+            <% if (typeof error !== 'undefined') { %>
+                <div class="bg-red-500 text-white p-3 rounded mb-4">
+                    <%= error %>
+                </div>
+            <% } %>
+            <form action="/register" method="POST" class="space-y-4">
+                <div>
+                    <label for="username" class="block text-gray-300 mb-2">Username</label>
+                    <input type="text" id="username" name="username" required 
+                           class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
+                </div>
+                <div>
+                    <label for="password" class="block text-gray-300 mb-2">Password</label>
+                    <input type="password" id="password" name="password" required 
+                           class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
+                </div>
+                <button type="submit" class="w-full py-2 bg-green-600 hover:bg-green-700 rounded text-white">
+                    Create Fan Account
+                </button>
+                <p class="text-sm text-gray-400 text-center">
+                    By registering, you agree to be a part of Vijay Sethupathi's fan community
+                </p>
+            </form>
+            <p class="mt-4 text-center text-gray-400">Already have an account? 
+                <a href="/login" class="text-cyan-400 hover:underline">Login here</a>
+            </p>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 py-4 text-center text-gray-500">
+        <p>&copy; 2025 Vijay Sethupathi. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const menuBtn = document.getElementById('menuBtn');
+        const closeBtn = document.getElementById('closeBtn');
+        const menu = document.getElementById('menu');
+
+        menuBtn.addEventListener('click', () => {
+            menu.classList.add('active');
+        });
+
+        closeBtn.addEventListener('click', () => {
+            menu.classList.remove('active');
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!menu.contains(event.target) && event.target !== menuBtn) {
+                menu.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= profile.username %>'s Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+    <header class="bg-gray-800/80 backdrop-blur-md py-6 shadow-lg sticky top-0 z-10 border-b border-gray-700">
+        <div class="container mx-auto px-4 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <a href="javascript:history.back()" class="text-white hover:text-blue-400 flex items-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Back
+                </a>
+                <h1 class="text-3xl font-bold text-white"><%= profile.username %>'s Profile</h1>
+            </div>
+        </div>
+    </header>
+
+    <%- include('partials/sidebar', { isAdmin: false }) %>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- Profile Info -->
+        <div class="bg-gray-800/50 backdrop-blur-md rounded-xl shadow-xl p-8 mb-8">
+            <div class="flex justify-between items-start">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold">
+                        <%= profile.username.charAt(0).toUpperCase() %>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold"><%= profile.username %></h2>
+                        <p class="text-gray-400">Member since <%= profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'N/A' %></p>
+                        <div class="flex space-x-4 mt-2">
+                            <span class="text-gray-400"><%= profile.followers.length %> followers</span>
+                            <span class="text-gray-400"><%= profile.following.length %> following</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex space-x-2">
+                    <% if (user && user.id !== profile._id.toString()) { %>
+                        <button onclick="openDMModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                            <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                            Message
+                        </button>
+                        <form action="/users/<%= profile._id %>/follow" method="POST">
+                            <button type="submit" 
+                                    class="<%= isFollowing ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700' %> text-white px-4 py-2 rounded-lg transition-colors">
+                                <%= isFollowing ? 'Unfollow' : 'Follow' %>
+                            </button>
+                        </form>
+                    <% } %>
+                </div>
+            </div>
+            
+            <% if (profile.bio) { %>
+                <p class="mt-4 text-gray-300"><%= profile.bio %></p>
+            <% } %>
+
+            <% if (profile.socialLinks && (profile.socialLinks.twitter || profile.socialLinks.instagram || profile.socialLinks.facebook)) { %>
+                <div class="mt-4 flex space-x-4">
+                    <% if (profile.socialLinks.twitter) { %>
+                        <a href="<%= profile.socialLinks.twitter %>" target="_blank" class="text-blue-400 hover:text-blue-300">
+                            <i class="fab fa-twitter"></i> Twitter
+                        </a>
+                    <% } %>
+                    <% if (profile.socialLinks.instagram) { %>
+                        <a href="<%= profile.socialLinks.instagram %>" target="_blank" class="text-blue-400 hover:text-blue-300">
+                            <i class="fab fa-instagram"></i> Instagram
+                        </a>
+                    <% } %>
+                    <% if (profile.socialLinks.facebook) { %>
+                        <a href="<%= profile.socialLinks.facebook %>" target="_blank" class="text-blue-400 hover:text-blue-300">
+                            <i class="fab fa-facebook"></i> Facebook
+                        </a>
+                    <% } %>
+                </div>
+            <% } %>
+
+            <% if (user && user.id !== profile._id) { %>
+                <div class="mt-4">
+                    <form action="/users/<%= profile._id %>/message" method="POST" class="flex gap-2">
+                        <input type="text" name="message" placeholder="Send a message..." 
+                               class="flex-1 px-4 py-2 bg-gray-700 rounded-lg">
+                        <button type="submit" class="bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700">
+                            Send
+                        </button>
+                    </form>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- DM Modal -->
+        <div id="dmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+            <div class="bg-gray-800 rounded-lg w-96 mx-auto mt-20 p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Message <%= profile.username %></h3>
+                    <button onclick="closeDMModal()" class="text-gray-400 hover:text-white">&times;</button>
+                </div>
+                <form action="/users/<%= profile._id %>/message" method="POST">
+                    <textarea name="message" 
+                              placeholder="Write your message..." 
+                              class="w-full px-4 py-2 bg-gray-700 rounded-lg mb-4 h-32 resize-none"
+                              required></textarea>
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                            Send Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Posts Section -->
+        <div class="bg-gray-800/50 backdrop-blur-md rounded-xl shadow-xl p-8">
+            <h3 class="text-2xl font-bold mb-6">Posts</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <% if (posts && posts.length > 0) { %>
+                    <% posts.filter(post => !post.isArchived).forEach(post => { %>
+                        <div class="bg-gray-700/50 backdrop-blur-md rounded-lg overflow-hidden">
+                            <img src="<%= post.image %>" alt="Post image" class="w-full h-48 object-cover">
+                            <div class="p-4">
+                                <p class="text-gray-300"><%= post.caption %></p>
+                                <div class="mt-4 flex items-center justify-between">
+                                    <div class="flex items-center space-x-4">
+                                        <form action="/posts/<%= post._id %>/like" method="POST">
+                                            <button type="submit" class="flex items-center space-x-1">
+                                                <svg class="w-6 h-6 <%= post.likes.includes(user?.id) ? 'text-red-500' : 'text-gray-400' %>"
+                                                     fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"/>
+                                                </svg>
+                                                <span><%= post.likes.length %></span>
+                                            </button>
+                                        </form>
+                                        <button onclick="toggleComments('<%= post._id %>')" class="text-gray-400 hover:text-white">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                            </svg>
+                                            <span><%= post.comments.length %></span>
+                                        </button>
+                                    </div>
+                                    <span class="text-sm text-gray-500">
+                                        <%= new Date(post.createdAt).toLocaleDateString() %>
+                                    </span>
+                                </div>
+
+                                <!-- Comments Section -->
+                                <div id="comments-<%= post._id %>" class="hidden mt-4 space-y-4">
+                                    <form action="/posts/<%= post._id %>/comment" method="POST" class="flex gap-2">
+                                        <input type="text" name="text" placeholder="Add a comment..." 
+                                               class="flex-1 px-3 py-1 bg-gray-600 rounded-lg">
+                                        <button type="submit" class="px-3 py-1 bg-blue-600 rounded-lg hover:bg-blue-700">
+                                            Post
+                                        </button>
+                                    </form>
+                                    <div class="space-y-2">
+                                        <% post.comments.forEach(comment => { %>
+                                            <div class="flex justify-between items-start bg-gray-600/50 p-2 rounded-lg">
+                                                <div>
+                                                    <span class="font-semibold"><%= comment.userId.username %></span>
+                                                    <p class="text-sm"><%= comment.text %></p>
+                                                </div>
+                                                <% if (user && (user.id === comment.userId.toString() || user.id === profile._id.toString())) { %>
+                                                    <form action="/posts/<%= post._id %>/comments/<%= comment._id %>?_method=DELETE" 
+                                                          method="POST" class="ml-2">
+                                                        <button type="submit" class="text-red-400 hover:text-red-300">×</button>
+                                                    </form>
+                                                <% } %>
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <p class="text-gray-400 col-span-3 text-center">No posts yet.</p>
+                <% } %>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800/80 backdrop-blur-md py-6 mt-8">
+        <div class="container mx-auto px-4 text-center text-gray-400">
+            <p>&copy; 2025 Vijay Sethupathi. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function toggleComments(postId) {
+            const commentsSection = document.getElementById(`comments-${postId}`);
+            commentsSection.classList.toggle('hidden');
+        }
+        
+        function openDMModal() {
+            document.getElementById('dmModal').classList.remove('hidden');
+        }
+        
+        function closeDMModal() {
+            document.getElementById('dmModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

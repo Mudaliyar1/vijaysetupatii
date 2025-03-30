@@ -1,0 +1,27 @@
+<header class="bg-gray-800 shadow-lg p-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-4xl font-bold neon-text"><%= title %></h1>
+        <div class="flex items-center space-x-6">
+            <!-- Navigation Links -->
+            <nav class="flex space-x-6">
+                <a href="/admin/dashboard" class="text-gray-300 hover:text-white">Dashboard</a>
+                <a href="/admin/movies" class="text-gray-300 hover:text-white">Movies</a>
+                <a href="/admin/awards" class="text-gray-300 hover:text-white">Awards</a>
+                <a href="/admin/users" class="text-gray-300 hover:text-white">Users</a>
+                <a href="/admin/requests" class="text-gray-300 hover:text-white">Requests</a>
+                <a href="/admin/maintenance" class="text-gray-300 hover:text-white">Maintenance</a>
+                <a href="/admin/messages" class="text-gray-300 hover:text-white">Messages</a>
+            </nav>
+            <div class="flex items-center space-x-4">
+                <span class="text-gray-400"><%= user.username %></span>
+                <a href="/logout" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">Logout</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<% if (typeof message !== 'undefined') { %>
+    <div class="bg-green-500/20 text-green-400 p-4 mb-6">
+        <%= message %>
+    </div>
+<% } %>

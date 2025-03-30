@@ -1,0 +1,109 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables
+.env
+.env.*
+*.env
+.env.development
+.env.production
+.env.local
+.env.test
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage and test directories
+coverage/
+.nyc_output/
+.jest/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Build output
+dist/
+build/
+.next/
+out/
+
+# Temporary files
+tmp/
+temp/
+.cache/
+.temp/
+
+# Debug files
+.debug/
+debug.log
+
+# Local development files
+*.local
+local.*
+
+# Media and upload files
+uploads/
+public/uploads/
+media/
+user-content/
+private-media/
+
+# Session files
+sessions/
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+*.sql
+backups/
+dumps/
+
+# System specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Security related
+*.pem
+*.key
+*.cert
+*.crt
+security/
+certificates/
+private/
+*.ca-bundle
+*.p12
+*.pfx
+
+# Others
+.directory
+*.bak
+*.backup
+*.old
+*.tmp
+
+# Additional sensitive files
+config/secrets.*
+config/database.*
+*.config.js

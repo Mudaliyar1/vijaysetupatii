@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Requests</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <%- include('../partials/admin-header', { title: 'My Requests', user: user }) %>
+    <main class="p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-semibold">My Requests</h2>
+            <div class="flex space-x-4">
+                <select id="statusFilter" class="bg-gray-700 rounded-lg px-4 py-2">
+                    <option value="all">All Status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
+                <select id="typeFilter" class="bg-gray-700 rounded-lg px-4 py-2">
+                    <option value="all">All Types</option>
+                    <option value="movie">Movies</option>
+                    <option value="award">Awards</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="space-y-4" id="requestsList">
+            <!-- Similar structure as admin requests, but without admin actions -->
+            <% requests.forEach(request => { %>
+                <div class="bg-gray-800 p-4 rounded-lg request-item"
+                     data-status="<%= request.status %>"
+                     data-type="<%= request.type %>">
+                    <!-- Request content similar to admin requests -->
+                </div>
+            <% }); %>
+        </div>
+    </main>
+
+    <script>
+        // Similar filtering logic as admin requests
+    </script>
+</body>
+</html>

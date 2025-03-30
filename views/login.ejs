@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Vijay Sethupathi</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .hamburger-menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100%;
+            width: 250px;
+            background-color: #1f2937;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 50;
+        }
+
+        .hamburger-menu.active {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+    <header class="bg-gray-800 p-4 shadow-lg flex justify-between items-center">
+        <h1 class="text-3xl text-cyan-400 font-bold">Login</h1>
+        <button id="menuBtn" class="text-white text-3xl">&#9776;</button>
+    </header>
+
+    <div id="menu" class="hamburger-menu">
+        <button id="closeBtn" class="text-white text-3xl p-4">&times;</button>
+        <nav class="mt-4 space-y-4 p-4">
+            <a href="/" class="block text-white hover:text-cyan-400">Home</a>
+            <a href="/about" class="block text-white hover:text-cyan-400">About</a>
+            <a href="/movies" class="block text-white hover:text-cyan-400">Movies</a>
+            <a href="/awards" class="block text-white hover:text-cyan-400">Awards</a>
+            <a href="/message" class="block text-white hover:text-cyan-400">Message</a>
+        </nav>
+    </div>
+
+    <main class="p-6">
+        <section class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6 max-w-md mx-auto">
+            <h2 class="text-2xl font-bold mb-4">Login to Your Account</h2>
+            
+            <% if (typeof error !== 'undefined') { %>
+                <div class="bg-red-500/20 text-red-400 p-4 rounded-lg mb-4">
+                    <%= error %>
+                </div>
+            <% } %>
+
+            <form action="/auth/login" method="POST" class="space-y-6">
+                <% if (typeof error !== 'undefined') { %>
+                    <div class="bg-red-500/20 text-red-400 p-4 rounded-lg">
+                        <%= error %>
+                    </div>
+                <% } %>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Username</label>
+                    <input type="text" 
+                           name="username" 
+                           value="<%= typeof username !== 'undefined' ? username : '' %>"
+                           required 
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-gray-300 mb-2">Password</label>
+                    <input type="password" id="password" name="password" class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
+                </div>
+                <button type="submit" id="loginBtn" class="w-full py-2 bg-cyan-600 hover:bg-cyan-700 rounded text-white flex items-center justify-center">
+                    <span id="buttonText">Login</span>
+                    <div id="loadingSpinner" class="hidden">
+                        <svg class="animate-spin h-5 w-5 ml-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                </button>
+            </form>
+
+            <% if (typeof maintenance !== 'undefined' && maintenance) { %>
+                <script>
+                    let count = 5;
+                    const interval = setInterval(() => {
+                        count--;
+                        if (count <= 0) {
+                            clearInterval(interval);
+                            window.location.href = '/';
+                        }
+                    }, 1000);
+                </script>
+            <% } %>
+
+            <p class="mt-4 text-center text-gray-400">Don't have an account? 
+                <a href="/register" class="text-cyan-400 hover:underline">Register here</a>
+            </p>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 py-4 text-center text-gray-500">
+        <p>&copy; 2025 Vijay Sethupathi. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const menuBtn = document.getElementById('menuBtn');
+        const closeBtn = document.getElementById('closeBtn');
+        const menu = document.getElementById('menu');
+
+        menuBtn.addEventListener('click', () => {
+            menu.classList.add('active');
+        });
+
+        closeBtn.addEventListener('click', () => {
+            menu.classList.remove('active');
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(Object.fromEntries(formData))
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = data.redirectUrl;
+                } else if (data.maintenance) {
+                    // Show maintenance error message
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'bg-red-500/20 text-red-400 p-4 rounded-lg mb-4';
+                    errorDiv.innerHTML = `
+                        <p class="mb-2">${data.message}</p>
+                        <p>Redirecting to maintenance page in <span id="countdown">5</span> seconds...</p>
+                    `;
+                    
+                    const form = document.getElementById('loginForm');
+                    form.insertBefore(errorDiv, form.firstChild);
+
+                    // Countdown and redirect
+                    let count = 5;
+                    const interval = setInterval(() => {
+                        count--;
+                        document.getElementById('countdown').textContent = count;
+                        if (count <= 0) {
+                            clearInterval(interval);
+                            window.location.href = data.redirectUrl;
+                        }
+                    }, 1000);
+                } else {
+                    throw new Error(data.error || 'Login failed');
+                }
+            } catch (error) {
+                // Show error message
+                alert(error.message);
+            }
+        });
+    </script>
+</body>
+</html>

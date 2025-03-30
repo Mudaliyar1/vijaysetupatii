@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - Vijay Sethupathi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #mobileMenu {
+            transition: transform 0.4s ease-in-out;
+            transform: translateX(100%);
+        }
+        #mobileMenu.show {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white font-sans relative overflow-x-hidden">
+    <!-- Hamburger Menu Button -->
+    <button id="hamburger" class="fixed top-4 right-4 z-20 text-white hover:text-blue-400 transition-colors">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+    </button>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="fixed top-0 right-0 w-64 h-full bg-gray-900/90 backdrop-blur-lg z-30 p-8 shadow-lg overflow-y-auto">
+        <button id="closeMenu" class="absolute top-4 right-4 text-white hover:text-red-500">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+        <nav class="mt-8 space-y-4">
+            <a href="/" class="block text-xl text-blue-400 hover:text-blue-600">Home</a>
+            <a href="/about" class="block text-xl text-blue-400 hover:text-blue-600">About</a>
+            <a href="/movies" class="block text-xl text-blue-400 hover:text-blue-600">Movies</a>
+            <a href="/awards" class="block text-xl text-blue-400 hover:text-blue-600">Awards</a>
+            <a href="/message" class="block text-xl text-blue-400 hover:text-blue-600">Message</a>
+            <a href="/users/search" class="block text-xl text-blue-400 hover:text-blue-600">Search Users</a>
+            <% if (!user) { %>
+                <a href="/login" class="block text-xl text-blue-400 hover:text-blue-600">Login</a>
+                <a href="/register" class="block text-xl text-blue-400 hover:text-blue-600">Register</a>
+            <% } else { %>
+                <a href="/logout" class="block text-xl text-red-500 hover:text-red-700">Logout</a>
+            <% } %>
+        </nav>
+    </div>
+
+    <header class="bg-gray-800/80 backdrop-blur-md py-6 shadow-lg sticky top-0 z-10 border-b border-gray-700">
+        <div class="container mx-auto px-4 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <a href="/" class="text-white hover:text-blue-400 flex items-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Back to Home
+                </a>
+                <h1 class="text-3xl font-bold text-white">My Profile</h1>
+            </div>
+            <div class="flex items-center space-x-6">
+                <!-- Notifications Dropdown -->
+                <div class="relative">
+                    <button onclick="toggleNotifications()" class="text-white hover:text-blue-400 relative">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                        <% if (unreadNotifications > 0) { %>
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                                <%= unreadNotifications %>
+                            </span>
+                        <% } %>
+                    </button>
+                    
+                    <!-- Notifications Panel -->
+                    <div id="notificationsPanel" class="hidden absolute right-0 mt-2 w-80 bg-gray-800 rounded-lg shadow-xl py-2 z-50">
+                        <div class="max-h-96 overflow-y-auto">
+                            <% notifications.forEach(notification => { %>
+                                <div class="px-4 py-3 hover:bg-gray-700 <%= !notification.read ? 'bg-gray-700/50' : '' %>">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                            <%= notification.sender.username.charAt(0).toUpperCase() %>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm">
+                                                <a href="/users/<%= notification.sender.username %>" class="font-semibold hover:underline">
+                                                    <%= notification.sender.username %>
+                                                </a>
+                                                <% if (notification.type === 'like') { %>
+                                                    liked your post
+                                                <% } else if (notification.type === 'comment') { %>
+                                                    commented on your post
+                                                <% } else if (notification.type === 'follow') { %>
+                                                    started following you
+                                                <% } else if (notification.type === 'message') { %>
+                                                    sent you a message
+                                                <% } %>
+                                            </p>
+                                            <span class="text-xs text-gray-400">
+                                                <%= new Date(notification.createdAt).toLocaleString() %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages Dropdown -->
+                <div class="relative">
+                    <button onclick="toggleMessages()" class="text-white hover:text-blue-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        <% if (unreadMessages > 0) { %>
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                                <%= unreadMessages %>
+                            </span>
+                        <% } %>
+                    </button>
+                    
+                    <!-- Messages Panel -->
+                    <div id="messagesPanel" class="hidden absolute right-0 mt-2 w-96 bg-gray-800 rounded-lg shadow-xl z-50">
+                        <div class="max-h-96 overflow-y-auto">
+                            <% conversations.forEach(conv => { %>
+                                <div class="px-4 py-3 hover:bg-gray-700 cursor-pointer"
+                                     onclick="openChat('<%= conv.user._id %>', '<%= conv.user.username %>')">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                                            <%= conv.user.username.charAt(0).toUpperCase() %>
+                                        </div>
+                                        <div class="ml-3 flex-1">
+                                            <div class="flex justify-between items-center">
+                                                <p class="font-semibold"><%= conv.user.username %></p>
+                                                <span class="text-xs text-gray-400">
+                                                    <%= new Date(conv.lastMessage.createdAt).toLocaleString() %>
+                                                </span>
+                                            </div>
+                                            <p class="text-sm text-gray-400 truncate"><%= conv.lastMessage.message %></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="/users/search" class="flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    Search Users
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Chat Window -->
+    <div id="chatWindow" class="fixed bottom-0 right-4 w-96 bg-gray-800 rounded-t-lg shadow-xl hidden z-[60]">
+        <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+            <h3 id="chatTitle" class="font-semibold"></h3>
+            <button onclick="closeChat()" class="text-gray-400 hover:text-white">&times;</button>
+        </div>
+        <div id="chatMessages" class="h-96 overflow-y-auto p-4 space-y-4">
+            <!-- Messages will be loaded here -->
+        </div>
+        <form id="chatForm" class="p-4 border-t border-gray-700">
+            <div class="flex space-x-2">
+                <input type="text" id="messageInput" class="flex-1 bg-gray-700 rounded-lg px-4 py-2" 
+                       placeholder="Type a message...">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-4 rounded-lg">Send</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- DM Modal -->
+    <div id="dmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-[60]">
+        <div class="bg-gray-800 rounded-lg w-96 mx-auto mt-20 p-6">
+            <!-- Modal content goes here -->
+        </div>
+    </div>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- Profile Info -->
+        <div class="bg-gray-800/50 backdrop-blur-md rounded-xl shadow-xl p-8 mb-8">
+            <div class="flex justify-between items-start">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold">
+                        <%= user.username.charAt(0).toUpperCase() %>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold"><%= user.username %></h2>
+                        <p class="text-gray-400">Member since <%= user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A' %></p>
+                    </div>
+                </div>
+                <form action="/profile/delete" method="POST" onsubmit="return confirm('Are you sure you want to delete your account? This cannot be undone.');" class="mt-2">
+                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        Delete Account
+                    </button>
+                </form>
+            </div>
+            <div class="flex space-x-4 mt-4">
+                <button onclick="openFollowModal()" class="text-blue-400 hover:text-blue-300">
+                    <span class="font-bold"><%= user.followers.length %></span> followers
+                </button>
+                <button onclick="openFollowModal()" class="text-blue-400 hover:text-blue-300">
+                    <span class="font-bold"><%= user.following.length %></span> following
+                </button>
+            </div>
+        </div>
+
+        <!-- Followers/Following Modal -->
+        <div id="followModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+            <div class="bg-gray-800 rounded-lg w-96 mx-auto mt-20 p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex space-x-4">
+                        <button onclick="showFollowers()" class="text-blue-400 hover:text-blue-300" id="followersTab">
+                            Followers (<%= user.followers.length %>)
+                        </button>
+                        <button onclick="showFollowing()" class="text-gray-400 hover:text-blue-300" id="followingTab">
+                            Following (<%= user.following.length %>)
+                        </button>
+                    </div>
+                    <button onclick="closeFollowModal()" class="text-gray-400 hover:text-white">&times;</button>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="mb-4">
+                    <input type="text" id="followSearch" 
+                           placeholder="Search users..." 
+                           onkeyup="filterUsers(this.value)"
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg text-white">
+                </div>
+
+                <div id="followersList" class="space-y-4 max-h-96 overflow-y-auto">
+                    <% user.followers.forEach(follower => { %>
+                        <div class="follow-item flex items-center justify-between p-2 hover:bg-gray-700 rounded">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                                    <%= follower.username.charAt(0).toUpperCase() %>
+                                </div>
+                                <a href="/users/<%= follower.username %>" 
+                                   class="text-white hover:text-blue-400 username-text">
+                                    <%= follower.username %>
+                                </a>
+                            </div>
+                            <div class="flex space-x-2">
+                                <a href="/users/<%= follower.username %>" 
+                                   class="text-sm text-blue-400 hover:text-blue-300">
+                                    View
+                                </a>
+                                <form action="/users/<%= follower._id %>/follow" method="POST">
+                                    <button type="submit" class="text-sm text-red-400 hover:text-red-300">
+                                        Remove
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+
+                <div id="followingList" class="hidden space-y-4 max-h-96 overflow-y-auto">
+                    <% user.following.forEach(following => { %>
+                        <div class="follow-item flex items-center justify-between p-2 hover:bg-gray-700 rounded">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                                    <%= following.username.charAt(0).toUpperCase() %>
+                                </div>
+                                <a href="/users/<%= following.username %>" 
+                                   class="text-white hover:text-blue-400 username-text">
+                                    <%= following.username %>
+                                </a>
+                            </div>
+                            <div class="flex space-x-2">
+                                <a href="/users/<%= following.username %>" 
+                                   class="text-sm text-blue-400 hover:text-blue-300">
+                                    View
+                                </a>
+                                <form action="/users/<%= following._id %>/follow" method="POST">
+                                    <button type="submit" class="text-sm text-red-400 hover:text-red-300">
+                                        Unfollow
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Posts Section -->
+        <div class="bg-gray-800/50 backdrop-blur-md rounded-xl shadow-xl p-8 mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">My Posts</h3>
+                <button onclick="togglePostForm()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                    Add New Post
+                </button>
+            </div>
+
+            <!-- Add Post Form -->
+            <form id="addPostForm" action="/profile/posts" method="POST" class="hidden mb-8 bg-gray-700/50 backdrop-blur-md rounded-lg p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Image URL</label>
+                        <input type="url" name="image" required 
+                               placeholder="Enter image URL..."
+                               class="w-full px-4 py-2 bg-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Caption</label>
+                        <textarea name="caption" rows="3" 
+                                  class="w-full px-4 py-2 bg-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Write a caption..."></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="togglePostForm()" 
+                                class="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
+                            Post
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Posts List -->
+            <div class="space-y-6">
+                <div class="flex space-x-4 mb-4">
+                    <button onclick="showActivePosts()" class="text-blue-400 hover:text-blue-300">Active Posts</button>
+                    <button onclick="showArchivedPosts()" class="text-blue-400 hover:text-blue-300">Archived Posts</button>
+                </div>
+                
+                <% if (posts && posts.length > 0) { %>
+                    <% posts.forEach(post => { %>
+                        <div class="post-item bg-gray-700/50 backdrop-blur-md rounded-lg p-6 <%= post.isArchived ? 'archived hidden' : 'active' %>">
+                            <img src="<%= post.image %>" alt="Post image" class="w-full h-64 object-cover rounded-lg mb-4">
+                            <p class="text-gray-300 mb-4"><%= post.caption %></p>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-gray-400">
+                                    Posted on <%= new Date(post.createdAt).toLocaleDateString() %>
+                                </span>
+                                <div class="flex space-x-2">
+                                    <button onclick="toggleEditForm('<%= post._id %>')" 
+                                            class="text-blue-400 hover:text-blue-300">
+                                        Edit
+                                    </button>
+                                    <form action="/profile/posts/<%= post._id %>/archive?_method=PUT" method="POST">
+                                        <button type="submit" class="text-yellow-400 hover:text-yellow-300">
+                                            Archive
+                                        </button>
+                                    </form>
+                                    <form action="/profile/posts/<%= post._id %>?_method=DELETE" method="POST"
+                                          onsubmit="return confirm('Delete this post?');">
+                                        <button type="submit" class="text-red-400 hover:text-red-300">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            <!-- Edit Form (Hidden by default) -->
+                            <form id="editForm<%= post._id %>" action="/profile/posts/<%= post._id %>?_method=PUT" 
+                                  method="POST" class="hidden mt-4">
+                                <textarea name="caption" class="w-full px-4 py-2 bg-gray-600 rounded-lg mb-2"><%= post.caption %></textarea>
+                                <div class="flex justify-end space-x-2">
+                                    <button type="button" onclick="toggleEditForm('<%= post._id %>')" 
+                                            class="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg">
+                                        Cancel
+                                    </button>
+                                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">
+                                        Save
+                                    </button>
+                                </div>
+                            </form>
+                            <!-- Comments Section -->
+                            <div class="comments-section mt-4 space-y-2">
+                                <% post.comments.forEach(comment => { %>
+                                    <div class="flex justify-between items-start bg-gray-600/50 p-2 rounded-lg">
+                                        <div>
+                                            <a href="/users/<%= comment.userId.username %>" class="font-semibold text-blue-400 hover:text-blue-300">
+                                                <%= comment.userId.username %>
+                                            </a>
+                                            <p class="text-sm text-gray-300"><%= comment.text %></p>
+                                            <span class="text-xs text-gray-500">
+                                                <%= new Date(comment.createdAt).toLocaleDateString() %>
+                                            </span>
+                                        </div>
+                                        <% if (user.id === comment.userId.toString()) { %>
+                                            <form action="/posts/<%= post._id %>/comments/<%= comment._id %>?_method=DELETE" method="POST">
+                                                <button type="submit" class="text-red-400 hover:text-red-300">Delete</button>
+                                            </form>
+                                        <% } %>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <p class="text-gray-400 text-center">No posts yet. Share your first post!</p>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Messages Section -->
+        <div class="bg-gray-800/50 backdrop-blur-md rounded-xl shadow-xl p-8">
+            <h3 class="text-2xl font-bold mb-6">My Messages</h3>
+            <div class="space-y-4">
+                <% if (messages && messages.length > 0) { %>
+                    <% messages.forEach(message => { %>
+                        <div class="bg-gray-700/50 backdrop-blur-md rounded-lg p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-300"><%= message.message %></p>
+                                    <p class="text-sm text-gray-500 mt-2">
+                                        From: <a href="/users/<%= message.from.username %>" class="text-blue-400 hover:underline">
+                                            <%= message.from.username %>
+                                        </a>
+                                        <span class="mx-2">•</span>
+                                        <%= new Date(message.createdAt).toLocaleString() %>
+                                    </p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button onclick="showReplyForm('<%= message._id %>')" class="text-blue-400 hover:text-blue-300">
+                                        Reply
+                                    </button>
+                                    <form action="/messages/<%= message._id %>/delete" method="POST" 
+                                          onsubmit="return confirm('Delete this message?');">
+                                        <button type="submit" class="text-red-400 hover:text-red-300">
+                                            Delete
+                                        </button>
+                                    </form>
+                                    <% if (!message.read) { %>
+                                        <span class="bg-blue-500 px-2 py-1 rounded-full text-xs">New</span>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <!-- Reply Form (Hidden by default) -->
+                            <div id="replyForm-<%= message._id %>" class="hidden mt-4">
+                                <form action="/messages/reply" method="POST" class="flex gap-2">
+                                    <input type="hidden" name="to" value="<%= message.from._id %>">
+                                    <input type="hidden" name="replyTo" value="<%= message._id %>">
+                                    <input type="text" name="message" placeholder="Write your reply..." 
+                                           class="flex-1 px-4 py-2 bg-gray-600 rounded-lg">
+                                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">
+                                        Send
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <p class="text-gray-400 text-center">No messages yet.</p>
+                <% } %>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800/80 backdrop-blur-md py-6 mt-8 border-t border-gray-700">
+        <div class="container mx-auto px-4 text-center text-gray-400">
+            <p>&copy; 2025 Vijay Sethupathi. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        const hamburger = document.getElementById('hamburger');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const closeMenu = document.getElementById('closeMenu');
+
+        hamburger.addEventListener('click', () => {
+            mobileMenu.classList.add('show');
+        });
+
+        closeMenu.addEventListener('click', () => {
+            mobileMenu.classList.remove('show');
+        });
+
+        function togglePostForm() {
+            const form = document.getElementById('addPostForm');
+            form.classList.toggle('hidden');
+        }
+
+        function toggleEditForm(postId) {
+            const form = document.getElementById(`editForm${postId}`);
+            form.classList.toggle('hidden');
+        }
+
+        function showActivePosts() {
+            document.querySelectorAll('.post-item').forEach(post => {
+                post.classList.add('hidden');
+            });
+            document.querySelectorAll('.active').forEach(post => {
+                post.classList.remove('hidden');
+            });
+        }
+
+        function showArchivedPosts() {
+            document.querySelectorAll('.post-item').forEach(post => {
+                post.classList.add('hidden');
+            });
+            document.querySelectorAll('.archived').forEach(post => {
+                post.classList.remove('hidden');
+            });
+        }
+
+        function openFollowModal() {
+            document.getElementById('followModal').classList.remove('hidden');
+            showFollowers(); // Default to showing followers
+        }
+
+        function closeFollowModal() {
+            document.getElementById('followModal').classList.add('hidden');
+        }
+
+        function showFollowers() {
+            document.getElementById('followersList').classList.remove('hidden');
+            document.getElementById('followingList').classList.add('hidden');
+            document.getElementById('followersTab').classList.add('text-blue-400');
+            document.getElementById('followersTab').classList.remove('text-gray-400');
+            document.getElementById('followingTab').classList.add('text-gray-400');
+            document.getElementById('followingTab').classList.remove('text-blue-400');
+        }
+
+        function showFollowing() {
+            document.getElementById('followersList').classList.add('hidden');
+            document.getElementById('followingList').classList.remove('hidden');
+            document.getElementById('followersTab').classList.add('text-gray-400');
+            document.getElementById('followersTab').classList.remove('text-blue-400');
+            document.getElementById('followingTab').classList.add('text-blue-400');
+            document.getElementById('followingTab').classList.remove('text-gray-400');
+        }
+
+        function filterUsers(searchText) {
+            const items = document.querySelectorAll('.follow-item');
+            const searchLower = searchText.toLowerCase();
+            
+            items.forEach(item => {
+                const username = item.querySelector('.username-text').textContent.toLowerCase();
+                if (username.includes(searchLower)) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+        }
+
+        function toggleNotifications() {
+            const panel = document.getElementById('notificationsPanel');
+            panel.classList.toggle('hidden');
+            document.getElementById('messagesPanel').classList.add('hidden');
+        }
+
+        function toggleMessages() {
+            const panel = document.getElementById('messagesPanel');
+            panel.classList.toggle('hidden');
+            document.getElementById('notificationsPanel').classList.add('hidden');
+        }
+
+        function openChat(userId, username) {
+            const chatWindow = document.getElementById('chatWindow');
+            const chatTitle = document.getElementById('chatTitle');
+            chatWindow.classList.remove('hidden');
+            chatTitle.textContent = username;
+            
+            // Load chat messages
+            loadChatMessages(userId);
+            
+            // Store current chat user
+            chatWindow.dataset.userId = userId;
+        }
+
+        function closeChat() {
+            document.getElementById('chatWindow').classList.add('hidden');
+        }
+
+        function loadChatMessages(userId) {
+            fetch(`/messages/${userId}`)
+                .then(res => res.json())
+                .then(messages => {
+                    const chatMessages = document.getElementById('chatMessages');
+                    chatMessages.innerHTML = messages.map(msg => `
+                        <div class="flex ${msg.from === userId ? 'justify-start' : 'justify-end'}">
+                            <div class="${msg.from === userId ? 'bg-gray-700' : 'bg-blue-600'} rounded-lg px-4 py-2 max-w-[80%]">
+                                <p class="text-sm">${msg.message}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                });
+        }
+
+        document.getElementById('chatForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('messageInput');
+            const userId = document.getElementById('chatWindow').dataset.userId;
+            
+            if (input.value.trim()) {
+                try {
+                    await fetch('/messages/send', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            to: userId,
+                            message: input.value.trim()
+                        })
+                    });
+                    input.value = '';
+                    loadChatMessages(userId);
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                }
+            }
+        });
+
+        // Click outside to close dropdowns
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#notificationsPanel') && !e.target.closest('button')) {
+                document.getElementById('notificationsPanel').classList.add('hidden');
+            }
+            if (!e.target.closest('#messagesPanel') && !e.target.closest('button')) {
+                document.getElementById('messagesPanel').classList.add('hidden');
+            }
+        });
+
+        function showReplyForm(messageId) {
+            const replyForm = document.getElementById(`replyForm-${messageId}`);
+            replyForm.classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Movie</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+    <header class="bg-gray-800 py-4 shadow-lg">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-white">Add New Movie</h1>
+            <nav class="flex items-center space-x-4">
+                <a href="/admin/movies" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Back to Movies</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <form action="/admin/movies" method="POST" class="max-w-2xl mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+            <div class="grid grid-cols-1 gap-6">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Movie Title</label>
+                    <input type="text" name="title" required class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Description</label>
+                    <textarea name="description" rows="4" required class="w-full px-4 py-2 bg-gray-700 rounded-lg"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Genre</label>
+                    <input type="text" name="genre" required class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Release Date</label>
+                    <input type="date" name="releaseDate" required class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Duration (minutes)</label>
+                    <input type="number" name="duration" required class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Image URL</label>
+                    <input type="url" name="image" required class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Director</label>
+                    <input type="text" name="director" required class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Language</label>
+                    <select name="language" required class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                        <option value="">Select Language</option>
+                        <option value="Tamil">Tamil</option>
+                        <option value="Telugu">Telugu</option>
+                        <option value="Hindi">Hindi</option>
+                        <option value="Malayalam">Malayalam</option>
+                        <option value="Kannada">Kannada</option>
+                        <option value="English">English</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div id="otherLanguageDetails" class="hidden">
+                    <label class="block text-sm font-medium mb-2">Specify Language</label>
+                    <input type="text" name="otherLanguage" class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Cast</label>
+                    <div id="castInputs" class="space-y-2">
+                        <div class="flex gap-2">
+                            <input type="text" name="cast[]" required class="flex-1 px-4 py-2 bg-gray-700 rounded-lg">
+                            <button type="button" onclick="addCastInput()" class="bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700">
+                                Add Cast
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 flex justify-end">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+                    Add Movie
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <script>
+        function addCastInput() {
+            const container = document.getElementById('castInputs');
+            const newInput = document.createElement('div');
+            newInput.className = 'flex gap-2';
+            newInput.innerHTML = `
+                <input type="text" name="cast[]" required class="flex-1 px-4 py-2 bg-gray-700 rounded-lg">
+                <button type="button" onclick="this.parentElement.remove()" 
+                        class="bg-red-600 px-4 py-2 rounded-lg hover:bg-red-700">
+                    Remove
+                </button>
+            `;
+            container.appendChild(newInput);
+        }
+
+        document.querySelector('select[name="language"]').addEventListener('change', function() {
+            const otherDetails = document.getElementById('otherLanguageDetails');
+            otherDetails.style.display = this.value === 'Other' ? 'block' : 'none';
+        });
+    </script>
+</body>
+</html>

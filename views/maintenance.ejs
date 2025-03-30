@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Under Maintenance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8 flex min-h-screen items-center justify-center">
+        <div class="w-full max-w-2xl mx-auto bg-gray-800/50 backdrop-blur-md p-8 rounded-xl shadow-2xl">
+            <!-- Maintenance Icon -->
+            <div class="mb-8 flex justify-center">
+                <div class="relative">
+                    <svg class="w-24 h-24 text-yellow-400 animate-spin-slow" fill="none" viewBox="0 0 24 24">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M12 6V4m0 2a6 6 0 100 12 6 6 0 000-12zm0 0v2m7 5h-2m-4 7v2m-7-5H4"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="text-center space-y-6">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-600">
+                    Under Maintenance
+                </h1>
+                <p class="text-xl text-gray-300 mb-6"><%= maintenance.message %></p>
+
+                <!-- Countdown Timer -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-lg mx-auto mb-8">
+                    <div class="bg-gray-700 p-3 rounded-lg">
+                        <span id="hours" class="text-2xl font-bold text-blue-400">00</span>
+                        <p class="text-xs mt-1">Hours</p>
+                    </div>
+                    <div class="bg-gray-700 p-3 rounded-lg">
+                        <span id="minutes" class="text-2xl font-bold text-blue-400">00</span>
+                        <p class="text-xs mt-1">Minutes</p>
+                    </div>
+                    <div class="bg-gray-700 p-3 rounded-lg">
+                        <span id="seconds" class="text-2xl font-bold text-blue-400">00</span>
+                        <p class="text-xs mt-1">Seconds</p>
+                    </div>
+                    <div class="bg-gray-700 p-3 rounded-lg">
+                        <span id="milliseconds" class="text-2xl font-bold text-blue-400">00</span>
+                        <p class="text-xs mt-1">Milliseconds</p>
+                    </div>
+                </div>
+
+                <!-- Login Message -->
+                <div class="bg-gray-700/50 backdrop-blur-md rounded-lg p-6 mb-6">
+                    <% if (!user) { %>
+                        <p class="text-gray-300 mb-4">Only administrators can access during maintenance.</p>
+                        <a href="/login" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+                            Administrator Login
+                        </a>
+                    <% } else if (user.role !== 'Admin') { %>
+                        <p class="text-red-400 mb-4">Your account doesn't have access during maintenance.</p>
+                        <a href="/logout" class="inline-block bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors">
+                            Logout
+                        </a>
+                    <% } %>
+                </div>
+
+                <!-- Maintenance Details -->
+                <div class="text-sm text-gray-400">
+                    <p>Started: <%= new Date(maintenance.startTime).toLocaleString() %></p>
+                    <p>Expected Duration: <%= maintenance.estimatedDuration %></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculateEndTime(startTime, duration) {
+            const start = new Date(startTime);
+            // Parse duration string format (e.g., "2 hours", "30 minutes", "1 day")
+            const match = duration.match(/^(\d+)\s*(second|minute|hour|day|month)s?$/i);
+            if (!match) return start; // Return start time if format is invalid
+
+            const [_, value, unit] = match;
+            const multipliers = {
+                second: 1000,
+                minute: 60 * 1000,
+                hour: 60 * 60 * 1000,
+                day: 24 * 60 * 60 * 1000,
+                month: 30 * 24 * 60 * 60 * 1000
+            };
+
+            return new Date(start.getTime() + (parseInt(value) * multipliers[unit.toLowerCase()]));
+        }
+
+        function updateCountdown() {
+            const startTime = new Date("<%= maintenance.startTime %>");
+            const duration = "<%= maintenance.estimatedDuration %>";
+            const endTime = calculateEndTime(startTime, duration);
+            const now = new Date();
+
+            if (!startTime || !endTime) {
+                console.error('Invalid start time or duration');
+                return;
+            }
+
+            const diff = Math.max(0, endTime - now);
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            const milliseconds = Math.floor((diff % 1000) / 10);
+
+            document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+            document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+            document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
+            document.getElementById('milliseconds').textContent = milliseconds.toString().padStart(2, '0');
+
+            return diff > 0;
+        }
+
+        // Update every 10ms for smooth countdown
+        const timer = setInterval(() => {
+            const stillCounting = updateCountdown();
+            if (!stillCounting) {
+                clearInterval(timer);
+                // Optionally refresh the page when maintenance is complete
+                window.location.reload();
+            }
+        }, 10);
+
+        // Initial call
+        updateCountdown();
+    </script>
+</body>
+</html>

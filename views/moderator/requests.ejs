@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Requests</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <%- include('../partials/moderator-header', { title: 'My Requests', user: user }) %>
+    
+    <main class="p-6">
+        <!-- Statistics -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+            <div class="bg-gray-800 p-4 rounded-lg stats-total">
+                <h3 class="text-lg font-semibold text-gray-400">Total</h3>
+                <p class="text-2xl font-bold"><%= stats.total %></p>
+            </div>
+            <div class="bg-yellow-500/20 p-4 rounded-lg stats-pending">
+                <h3 class="text-lg font-semibold text-yellow-400">Pending</h3>
+                <p class="text-2xl font-bold"><%= stats.pending %></p>
+            </div>
+            <div class="bg-green-500/20 p-4 rounded-lg stats-approved">
+                <h3 class="text-lg font-semibold text-green-400">Approved</h3>
+                <p class="text-2xl font-bold"><%= stats.approved %></p>
+            </div>
+            <div class="bg-red-500/20 p-4 rounded-lg stats-rejected">
+                <h3 class="text-lg font-semibold text-red-400">Rejected</h3>
+                <p class="text-2xl font-bold"><%= stats.rejected %></p>
+            </div>
+            <div class="bg-blue-500/20 p-4 rounded-lg stats-undone">
+                <h3 class="text-lg font-semibold text-blue-400">Undone</h3>
+                <p class="text-2xl font-bold"><%= stats.undone %></p>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="flex gap-4 mb-6">
+            <input type="text" 
+                   id="searchInput"
+                   placeholder="Search requests..."
+                   class="bg-gray-800 rounded-lg px-4 py-2 w-64">
+            <select id="statusFilter" class="bg-gray-800 rounded-lg px-4 py-2">
+                <option value="all">All Status</option>
+                <option value="Pending">Pending</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+                <option value="Undone">Undone</option>
+            </select>
+            <select id="typeFilter" class="bg-gray-800 rounded-lg px-4 py-2">
+                <option value="all">All Types</option>
+                <option value="movie">Movies</option>
+                <option value="award">Awards</option>
+            </select>
+        </div>
+
+        <!-- Entries Filter -->
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center space-x-4">
+                <label class="text-sm">Show entries:</label>
+                <select id="entriesFilter" class="bg-gray-800 rounded-lg px-4 py-2" onchange="updateDisplayLimit()">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="all">All</option>
+                </select>
+            </div>
+            <div class="text-sm text-gray-400">
+                Showing <span id="showingCount">0</span> of <%= requests.length %> requests
+            </div>
+        </div>
+
+        <!-- Requests List -->
+        <div class="space-y-4" id="requestsList">
+            <% requests.forEach(request => { %>
+                <div class="request-item bg-gray-800 p-6 rounded-lg"
+                     data-status="<%= request.status %>"
+                     data-type="<%= request.type %>"
+                     data-request-id="<%= request._id %>">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">
+                                <%= request.type.replace(/_/g, ' ').toUpperCase() %>
+                            </h3>
+                            <div class="flex items-center gap-2 mb-4">
+                                <span class="px-3 py-1 rounded-full text-sm
+                                    <%= request.status === 'Pending' ? 'bg-yellow-500/20 text-yellow-400' : 
+                                       request.status === 'Approved' ? 'bg-green-500/20 text-green-400' : 
+                                       request.status === 'Rejected' ? 'bg-red-500/20 text-red-400' :
+                                       'bg-blue-500/20 text-blue-400' %>">
+                                    <%= request.status %>
+                                </span>
+                                <span class="text-gray-400">
+                                    <%= new Date(request.createdAt).toLocaleString() %>
+                                </span>
+                            </div>
+                        </div>
+                        <button onclick="viewDetails('<%= JSON.stringify(request.data) %>')"
+                                class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">
+                            View Details
+                        </button>
+                    </div>
+                    <div class="flex space-x-2 mt-4">
+                        <% if (request.status === 'Pending' || request.status === 'Approved') { %>
+                            <button onclick="deleteRequest('<%= request._id %>')"
+                                    class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded">
+                                Delete Request
+                            </button>
+                        <% } %>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    </main>
+
+    <!-- Details Modal -->
+    <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="bg-gray-800 rounded-lg w-11/12 md:w-3/4 lg:w-1/2 mx-auto mt-20 p-6">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-xl font-bold">Request Details</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white">&times;</button>
+            </div>
+            <div id="modalContent" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <script>
+        // Filter functionality
+        function filterRequests() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const status = document.getElementById('statusFilter').value;
+            const type = document.getElementById('typeFilter').value;
+
+            document.querySelectorAll('.request-item').forEach(item => {
+                const matchesSearch = item.textContent.toLowerCase().includes(search);
+                const matchesStatus = status === 'all' || item.dataset.status === status;
+                const matchesType = type === 'all' || item.dataset.type.includes(type);
+
+                item.style.display = matchesSearch && matchesStatus && matchesType ? 'block' : 'none';
+            });
+        }
+
+        // Modal functionality
+        function viewDetails(data) {
+            const parsedData = JSON.parse(data);
+            const modal = document.getElementById('detailsModal');
+            const content = document.getElementById('modalContent');
+
+            content.innerHTML = Object.entries(parsedData)
+                .map(([key, value]) => `
+                    <div class="bg-gray-700 p-4 rounded-lg">
+                        <span class="text-gray-400">${key}:</span>
+                        <div class="mt-1">${value}</div>
+                    </div>
+                `).join('');
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('detailsModal').classList.add('hidden');
+        }
+
+        async function deleteRequest(requestId) {
+            if (!confirm('Are you sure you want to delete this request?')) return;
+
+            try {
+                const response = await fetch(`/moderator/requests/${requestId}/delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete request');
+                }
+
+                // Remove the request element from the DOM
+                const requestElement = document.querySelector(`[data-request-id="${requestId}"]`);
+                if (requestElement) {
+                    requestElement.remove();
+                }
+
+                // Update stats
+                updateStats(-1, requestElement.dataset.status.toLowerCase());
+                updateDisplayLimit();
+            } catch (error) {
+                alert('Error deleting request: ' + error.message);
+            }
+        }
+
+        function updateStats(change, status) {
+            const totalElement = document.querySelector('.stats-total');
+            const statusElement = document.querySelector(`.stats-${status}`);
+            
+            if (totalElement) {
+                totalElement.textContent = parseInt(totalElement.textContent) + change;
+            }
+            if (statusElement) {
+                statusElement.textContent = parseInt(statusElement.textContent) + change;
+            }
+        }
+
+        function updateDisplayLimit() {
+            const limit = document.getElementById('entriesFilter').value;
+            const items = document.querySelectorAll('.request-item');
+            let visibleCount = 0;
+
+            items.forEach((item, index) => {
+                if (limit === 'all' || index < parseInt(limit)) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            document.getElementById('showingCount').textContent = visibleCount;
+        }
+
+        // Add event listeners
+        document.getElementById('searchInput').addEventListener('input', filterRequests);
+        document.getElementById('statusFilter').addEventListener('change', filterRequests);
+        document.getElementById('typeFilter').addEventListener('change', filterRequests);
+        document.addEventListener('DOMContentLoaded', updateDisplayLimit);
+    </script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Awards - Moderator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <%- include('../partials/moderator-header', { title: 'Award Management', user: user }) %>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">Awards List</h2>
+            <a href="/moderator/awards/add" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add New Award
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <% awards.forEach(award => { %>
+                <div class="bg-gray-800 rounded-lg overflow-hidden shadow-lg" data-award-id="<%= award._id %>">
+                    <div class="p-4">
+                        <h3 class="text-xl font-bold mb-2 award-name"><%= award.name %></h3>
+                        <p class="text-gray-400 mb-4 award-description"><%= award.description %></p>
+                        
+                        <div class="grid grid-cols-2 gap-2 text-sm mb-4">
+                            <div>
+                                <span class="text-gray-400">Category:</span>
+                                <span class="text-white award-category"><%= award.category %></span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400">Year:</span>
+                                <span class="text-white award-year"><%= award.year %></span>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-2">
+                            <button onclick="createAwardEditRequest('<%= award._id %>')"
+                                    class="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded">
+                                Request Edit
+                            </button>
+                            <button onclick="createAwardDeleteRequest('<%= award._id %>')"
+                                    class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded">
+                                Request Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    </main>
+
+    <script>
+        async function createAwardEditRequest(awardId) {
+            const award = document.querySelector(`[data-award-id="${awardId}"]`);
+            const formData = {
+                name: award.querySelector('.award-name').textContent,
+                description: award.querySelector('.award-description').textContent,
+                category: award.querySelector('.award-category').textContent,
+                year: award.querySelector('.award-year').textContent
+            };
+
+            openEditModal(awardId, formData);
+        }
+
+        async function submitEditRequest(formData) {
+            try {
+                const response = await fetch('/moderator/awards/edit-request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        awardId: formData.get('awardId'),
+                        updates: Object.fromEntries(formData)
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to create edit request');
+                window.location.href = '/moderator/requests';
+            } catch (error) {
+                alert('Error creating edit request: ' + error.message);
+            }
+        }
+
+        async function createAwardDeleteRequest(awardId) {
+            if (!confirm('Are you sure you want to request deletion of this award?')) return;
+
+            try {
+                const response = await fetch('/moderator/awards/delete-request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ awardId })
+                });
+
+                if (!response.ok) throw new Error('Failed to create delete request');
+                window.location.href = '/moderator/requests';
+            } catch (error) {
+                alert('Error creating delete request: ' + error.message);
+            }
+        }
+    </script>
+
+    <!-- Edit Award Modal -->
+    <div id="editAwardModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="bg-gray-800 rounded-lg w-11/12 md:w-3/4 lg:w-1/2 mx-auto mt-20 p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-xl font-bold">Edit Award Request</h3>
+                <button onclick="closeEditModal()" class="text-gray-400 hover:text-white">&times;</button>
+            </div>
+            <form id="editAwardForm" class="space-y-4">
+                <input type="hidden" id="editAwardId" name="awardId">
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Award Name</label>
+                    <input type="text" id="editName" name="name" required class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Description</label>
+                    <textarea id="editDescription" name="description" rows="4" required class="w-full px-4 py-2 bg-gray-700 rounded-lg"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Category</label>
+                    <input type="text" id="editCategory" name="category" required class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Year</label>
+                    <input type="number" id="editYear" name="year" required class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+
+                <div class="flex justify-end space-x-4">
+                    <button type="button" onclick="closeEditModal()" class="px-4 py-2 bg-gray-700 rounded-lg">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700">Submit Edit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openEditModal(awardId, awardData) {
+            const modal = document.getElementById('editAwardModal');
+            document.getElementById('editAwardId').value = awardId;
+            document.getElementById('editName').value = awardData.name;
+            document.getElementById('editDescription').value = awardData.description;
+            document.getElementById('editCategory').value = awardData.category;
+            document.getElementById('editYear').value = awardData.year;
+            modal.classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editAwardModal').classList.add('hidden');
+        }
+
+        document.getElementById('editAwardForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const awardId = formData.get('awardId');
+            
+            try {
+                const response = await fetch('/moderator/awards/edit-request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        awardId,
+                        updates: Object.fromEntries(formData)
+                    })
+                });
+
+                if (response.ok) {
+                    window.location.href = '/moderator/requests';
+                } else {
+                    throw new Error('Failed to create edit request');
+                }
+            } catch (error) {
+                alert('Error creating edit request: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<header class="p-6 bg-gray-800 shadow-lg">
+    <div class="flex justify-between items-center">
+        <h1 class="text-4xl font-bold neon-text">Moderator Panel</h1>
+        <button id="hamburger" class="md:hidden text-white">☰</button>
+        <nav id="navbar" class="hidden md:flex space-x-4">
+            <a href="/moderator/dashboard" class="hover:text-blue-400">Dashboard</a>
+            <a href="/moderator/movies" class="hover:text-blue-400">Movies</a>
+            <a href="/moderator/awards" class="hover:text-blue-400">Awards</a>
+            <a href="/moderator/requests" class="hover:text-blue-400">My Requests</a>
+            <a href="/moderator/messages" class="hover:text-blue-400">Messages</a>
+            <a href="/logout" class="px-4 py-2 bg-red-600 rounded hover:bg-red-700">Logout</a>
+        </nav>
+    </div>
+</header>
+
+<% if (typeof message !== 'undefined') { %>
+    <div class="bg-green-500/20 text-green-400 p-4 mb-6">
+        <%= message %>
+    </div>
+<% } %>

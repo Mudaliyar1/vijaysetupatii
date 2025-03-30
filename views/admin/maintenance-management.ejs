@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance Management - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <%- include('../partials/admin-header', { title: 'Maintenance Management', user: user }) %>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- Add Maintenance Button -->
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-bold">Maintenance Management</h2>
+            <button onclick="openMaintenanceModal()" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Enable Maintenance Mode
+            </button>
+        </div>
+
+        <!-- Add Maintenance Modal -->
+        <div id="maintenanceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+            <div class="bg-gray-800 rounded-lg w-11/12 md:w-2/3 lg:w-1/2 mx-auto mt-20 p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-xl font-bold">Enable Maintenance Mode</h3>
+                    <button onclick="closeMaintenanceModal()" class="text-gray-400 hover:text-white">&times;</button>
+                </div>
+                <form action="/admin/maintenance/enable" method="POST" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Message</label>
+                        <input type="text" name="message" required 
+                               placeholder="Maintenance message..."
+                               class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Reason</label>
+                        <textarea name="reason" required rows="3"
+                                placeholder="Reason for maintenance..."
+                                class="w-full px-4 py-2 bg-gray-700 rounded-lg"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Duration</label>
+                        <div class="flex gap-2">
+                            <input type="number" name="durationValue" required min="1"
+                                   class="w-24 px-4 py-2 bg-gray-700 rounded-lg">
+                            <select name="durationUnit" required class="bg-gray-700 rounded-lg px-4 py-2">
+                                <option value="minutes">Minutes</option>
+                                <option value="hours">Hours</option>
+                                <option value="days">Days</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" onclick="closeMaintenanceModal()" 
+                                class="px-4 py-2 bg-gray-700 rounded-lg">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700">
+                            Enable Maintenance
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-400">Total Maintenance</h3>
+                <p class="text-3xl font-bold"><%= stats.totalMaintenance %></p>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-400">Auto-disabled</h3>
+                <p class="text-3xl font-bold text-yellow-400"><%= stats.autoDisabled %></p>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-400">Total Visits</h3>
+                <p class="text-3xl font-bold text-blue-400"><%= stats.totalVisits %></p>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-400">Login Attempts</h3>
+                <p class="text-3xl font-bold text-red-400"><%= stats.totalLogins %></p>
+            </div>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="bg-gray-800 p-6 rounded-lg mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm mb-2">Date Range</label>
+                    <div class="flex gap-2">
+                        <input type="date" id="startDate" class="bg-gray-700 rounded px-3 py-2 w-full">
+                        <input type="date" id="endDate" class="bg-gray-700 rounded px-3 py-2 w-full">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm mb-2">Status</label>
+                    <select id="statusFilter" class="bg-gray-700 rounded px-3 py-2 w-full">
+                        <option value="all">All</option>
+                        <option value="enabled">Enabled</option>
+                        <option value="disabled">Disabled</option>
+                        <option value="auto-disabled">Auto-disabled</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm mb-2">Duration</label>
+                    <select id="durationFilter" class="bg-gray-700 rounded px-3 py-2 w-full">
+                        <option value="all">All</option>
+                        <option value="short">< 1 hour</option>
+                        <option value="medium">1-6 hours</option>
+                        <option value="long">> 6 hours</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Maintenance History -->
+        <div class="bg-gray-800 rounded-lg overflow-hidden">
+            <table class="w-full">
+                <thead class="bg-gray-700">
+                    <tr>
+                        <th class="px-6 py-3 text-left">Date</th>
+                        <th class="px-6 py-3 text-left">Duration</th>
+                        <th class="px-6 py-3 text-left">Reason</th>
+                        <th class="px-6 py-3 text-left">Status</th>
+                        <th class="px-6 py-3 text-left">Visits</th>
+                        <th class="px-6 py-3 text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                    <% maintenanceHistory.forEach(maintenance => { %>
+                        <tr class="hover:bg-gray-700">
+                            <td class="px-6 py-4">
+                                <%= new Date(maintenance.startTime).toLocaleDateString() %>
+                            </td>
+                            <td class="px-6 py-4">
+                                <%= maintenance.estimatedDuration %>
+                            </td>
+                            <td class="px-6 py-4">
+                                <%= maintenance.reason %>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 rounded text-xs
+                                    <%= maintenance.isEnabled ? 'bg-green-500/20 text-green-400' :
+                                       maintenance.autoDisabled ? 'bg-yellow-500/20 text-yellow-400' :
+                                       'bg-red-500/20 text-red-400' %>">
+                                    <%= maintenance.isEnabled ? 'Active' :
+                                       maintenance.autoDisabled ? 'Auto-disabled' : 'Manual-disabled' %>
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <%= maintenance.visits %>
+                            </td>
+                            <td class="px-6 py-4">
+                                <button onclick="viewDetails('<%= maintenance._id %>')"
+                                        class="text-blue-400 hover:text-blue-300 mr-2">
+                                    View
+                                </button>
+                                <button onclick="deleteRecord('<%= maintenance._id %>')"
+                                        class="text-red-400 hover:text-red-300">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Details Modal -->
+    <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="bg-gray-800 rounded-lg w-11/12 md:w-3/4 lg:w-1/2 mx-auto mt-20 p-6">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-xl font-bold">Maintenance Details</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white">&times;</button>
+            </div>
+            <div id="modalContent" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <script>
+        // Add filter functionality
+        function applyFilters() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const status = document.getElementById('statusFilter').value;
+            const duration = document.getElementById('durationFilter').value;
+
+            window.location.href = `/admin/maintenance?startDate=${startDate}&endDate=${endDate}&status=${status}&duration=${duration}`;
+        }
+
+        // Add event listeners to filters
+        document.getElementById('startDate').addEventListener('change', applyFilters);
+        document.getElementById('endDate').addEventListener('change', applyFilters);
+        document.getElementById('statusFilter').addEventListener('change', applyFilters);
+        document.getElementById('durationFilter').addEventListener('change', applyFilters);
+
+        async function viewDetails(id) {
+            try {
+                const response = await fetch(`/admin/maintenance/${id}`);
+                const data = await response.json();
+                
+                document.getElementById('modalContent').innerHTML = `
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-gray-400">Started</label>
+                                <p>${new Date(data.startTime).toLocaleString()}</p>
+                            </div>
+                            <div>
+                                <label class="text-gray-400">Ended</label>
+                                <p>${data.endTime ? new Date(data.endTime).toLocaleString() : 'N/A'}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-gray-400">Message</label>
+                            <p>${data.message}</p>
+                        </div>
+                        <div>
+                            <label class="text-gray-400">Statistics</label>
+                            <ul class="list-disc pl-5 mt-2">
+                                <li>Total Visits: ${data.visits}</li>
+                                <li>Login Attempts: ${data.loginAttempts}</li>
+                                <li>Duration: ${data.estimatedDuration}</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('detailsModal').classList.remove('hidden');
+            } catch (error) {
+                console.error('Error fetching maintenance details:', error);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('detailsModal').classList.add('hidden');
+        }
+
+        async function deleteRecord(id) {
+            if (!confirm('Are you sure you want to delete this maintenance record?')) return;
+
+            try {
+                const response = await fetch(`/admin/maintenance/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    throw new Error('Failed to delete record');
+                }
+            } catch (error) {
+                console.error('Error deleting maintenance record:', error);
+            }
+        }
+
+        function openMaintenanceModal() {
+            document.getElementById('maintenanceModal').classList.remove('hidden');
+        }
+
+        function closeMaintenanceModal() {
+            document.getElementById('maintenanceModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <%- include('partials/sidebar', { isAdmin: false }) %>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto space-y-8">
+            <h1 class="text-3xl font-bold">Account Settings</h1>
+
+            <form action="/settings/update" method="POST" class="space-y-6 bg-gray-800 p-6 rounded-lg">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Bio</label>
+                    <textarea name="bio" rows="3" 
+                        class="w-full bg-gray-700 rounded-lg p-3"><%= user.bio %></textarea>
+                </div>
+
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold">Social Links</h3>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Twitter</label>
+                        <input type="url" name="twitter" value="<%= user.socialLinks?.twitter %>"
+                            class="w-full bg-gray-700 rounded-lg p-3">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Instagram</label>
+                        <input type="url" name="instagram" value="<%= user.socialLinks?.instagram %>"
+                            class="w-full bg-gray-700 rounded-lg p-3">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Facebook</label>
+                        <input type="url" name="facebook" value="<%= user.socialLinks?.facebook %>"
+                            class="w-full bg-gray-700 rounded-lg p-3">
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold">Change Password</h3>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Current Password</label>
+                        <input type="password" name="currentPassword" 
+                            class="w-full bg-gray-700 rounded-lg p-3">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">New Password</label>
+                        <input type="password" name="newPassword" 
+                            class="w-full bg-gray-700 rounded-lg p-3">
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button type="submit" 
+                        class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+</body>
+</html>

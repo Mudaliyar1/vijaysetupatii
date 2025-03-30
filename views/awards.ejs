@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Awards - Vijay Sethupathi</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .hamburger-menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100%;
+            width: 250px;
+            background-color: #1f2937;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 50;
+        }
+
+        .hamburger-menu.active {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+    <header class="bg-gray-800 p-4 shadow-lg flex justify-between items-center">
+        <h1 class="text-3xl text-cyan-400 font-bold">Vijay Sethupathi</h1>
+        <div class="flex items-center space-x-4">
+            <button id="menuBtn" class="text-white text-3xl">&#9776;</button>
+        </div>
+    </header>
+
+    <div id="menu" class="hamburger-menu">
+        <button id="closeBtn" class="text-white text-3xl p-4">&times;</button>
+        <nav class="mt-4 space-y-4 p-4">
+            <a href="/" class="block text-white hover:text-cyan-400">Home</a>
+            <a href="/about" class="block text-white hover:text-cyan-400">About</a>
+            <a href="/movies" class="block text-white hover:text-cyan-400">Movies</a>
+            <a href="/awards" class="block text-white hover:text-cyan-400">Awards</a>
+            <a href="/message" class="block text-white hover:text-cyan-400">Message</a>
+            <% if (typeof user !== 'undefined' && user) { %>
+                <a href="/profile" class="block text-white hover:text-cyan-400">Profile</a>
+                <a href="/users/search" class="block text-white hover:text-cyan-400">Search Users</a>
+                <a href="/logout" class="block text-red-500 hover:text-red-700">Logout</a>
+            <% } else { %>
+                <a href="/login" class="block text-white hover:text-cyan-400">Login</a>
+                <a href="/register" class="block text-white hover:text-cyan-400">Register</a>
+            <% } %>
+        </nav>
+    </div>
+
+    <main class="p-6">
+        <section class="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h2 class="text-2xl font-bold mb-4">Awards & Achievements</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <% awards.forEach(award => { %>
+                    <div class="bg-gray-700 p-4 rounded-lg shadow hover:bg-gray-600 transition duration-300">
+                        <h3 class="text-xl font-bold mb-2"><%= award.name %></h3>
+                        <p><%= award.description %></p>
+                        <p class="mt-2 text-sm text-gray-400">Year: <%= award.year %></p>
+                    </div>
+                <% }); %>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 py-4 text-center text-gray-500">
+        <p>&copy; 2025 Vijay Sethupathi. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const menuBtn = document.getElementById('menuBtn');
+        const closeBtn = document.getElementById('closeBtn');
+        const menu = document.getElementById('menu');
+
+        menuBtn.addEventListener('click', () => {
+            menu.classList.add('active');
+        });
+
+        closeBtn.addEventListener('click', () => {
+            menu.classList.remove('active');
+        });
+    </script>
+</body>
+</html>

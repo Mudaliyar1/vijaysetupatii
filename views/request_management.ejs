@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4">Moderator Requests</h1>
+        <table class="table-auto w-full text-left">
+            <thead>
+                <tr>
+                    <th class="px-4 py-2">Type</th>
+                    <th class="px-4 py-2">Data</th>
+                    <th class="px-4 py-2">Status</th>
+                    <th class="px-4 py-2">Created By</th>
+                    <th class="px-4 py-2">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% requests.forEach(request => { %>
+                <tr>
+                    <td class="border px-4 py-2"><%= request.type %></td>
+                    <td class="border px-4 py-2"><%= JSON.stringify(request.data) %></td>
+                    <td class="border px-4 py-2"><%= request.status %></td>
+                    <td class="border px-4 py-2"><%= request.createdBy %></td>
+                    <td class="border px-4 py-2">
+                        <% if (request.status === 'Pending') { %>
+                        <form action="/admin/requests/<%= request._id %>/approve" method="POST" class="inline">
+                            <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded">Approve</button>
+                        </form>
+                        <form action="/admin/requests/<%= request._id %>/reject" method="POST" class="inline">
+                            <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded">Reject</button>
+                        </form>
+                        <% } else { %>
+                        <span class="text-gray-500">No actions available</span>
+                        <% } %>
+                    </td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

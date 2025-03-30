@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Users</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <%- include('partials/sidebar', { isAdmin: false }) %>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex items-center space-x-4 mb-8">
+                <a href="/" class="text-white hover:text-blue-400 flex items-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Back to Home
+                </a>
+                <h1 class="text-3xl font-bold">Search Users</h1>
+            </div>
+
+            <form action="/users/search" method="GET" class="mb-8">
+                <div class="flex gap-4">
+                    <div class="flex-1 relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </div>
+                        <input type="search" name="q" value="<%= query %>" 
+                            placeholder="Search users..." 
+                            class="w-full pl-10 pr-4 py-3 bg-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <button type="submit" 
+                        class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        Search
+                    </button>
+                </div>
+            </form>
+
+            <!-- Recent Searches -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold mb-4">Recent Searches</h3>
+                <div class="flex flex-wrap gap-2 recent-searches">
+                    <% (recentSearches || []).forEach(search => { %>
+                        <a href="/users/search?q=<%= search %>" 
+                           class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full text-sm flex items-center">
+                            <span><%= search %></span>
+                            <button onclick="removeSearch('<%= search %>', event)" class="ml-2 text-gray-400 hover:text-red-400">×</button>
+                        </a>
+                    <% }); %>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <% users.forEach(user => { %>
+                    <div class="bg-gray-800 rounded-lg p-6 flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                                <%= user.username.charAt(0).toUpperCase() %>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold"><%= user.username %></h3>
+                                <p class="text-sm text-gray-400"><%= user.followers.length %> followers</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <a href="/users/<%= user.username %>" class="text-blue-400 hover:underline">View Profile</a>
+                            <% if (currentUser && currentUser.id !== user._id.toString()) { %>
+                                <form action="/users/<%= user._id %>/follow" method="POST">
+                                    <button type="submit" 
+                                        class="<%= user.isFollowing ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700' %> text-white px-4 py-2 rounded-lg transition-colors">
+                                        <%= user.isFollowing ? 'Unfollow' : 'Follow' %>
+                                    </button>
+                                </form>
+                            <% } %>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Store search in localStorage when form is submitted
+        document.querySelector('form').addEventListener('submit', (e) => {
+            const searchQuery = document.querySelector('input[name="q"]').value.trim();
+            if (searchQuery) {
+                const searches = JSON.parse(localStorage.getItem('recentSearches') || '[]');
+                if (!searches.includes(searchQuery)) {
+                    searches.unshift(searchQuery);
+                    if (searches.length > 5) searches.pop(); // Keep only 5 recent searches
+                    localStorage.setItem('recentSearches', JSON.stringify(searches));
+                }
+            }
+        });
+
+        // Load and display recent searches immediately
+        function loadRecentSearches() {
+            const searches = JSON.parse(localStorage.getItem('recentSearches') || '[]');
+            const container = document.querySelector('.recent-searches');
+            if (container) {
+                container.innerHTML = searches.map(search => `
+                    <a href="/users/search?q=${encodeURIComponent(search)}" 
+                       class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full text-sm flex items-center">
+                        <span>${search}</span>
+                        <button onclick="removeSearch('${search}', event)" class="ml-2 text-gray-400 hover:text-red-400">×</button>
+                    </a>
+                `).join('');
+            }
+        }
+
+        // Remove search from history
+        function removeSearch(search, event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const searches = JSON.parse(localStorage.getItem('recentSearches') || '[]');
+            const newSearches = searches.filter(s => s !== search);
+            localStorage.setItem('recentSearches', JSON.stringify(newSearches));
+            loadRecentSearches();
+        }
+
+        // Initial load of recent searches
+        window.addEventListener('load', loadRecentSearches);
+    </script>
+</body>
+</html>

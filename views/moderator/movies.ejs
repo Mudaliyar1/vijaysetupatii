@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Movies - Moderator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <%- include('../partials/moderator-header', { title: 'Movie Management', user: user }) %>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">Movie List</h2>
+            <a href="/moderator/movies/add" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add New Movie
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <% movies.forEach(movie => { %>
+                <div class="bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                    <img src="<%= movie.image %>" alt="<%= movie.title %>" class="w-full h-48 object-cover">
+                    <div class="p-4">
+                        <h3 class="text-xl font-bold mb-2"><%= movie.title %></h3>
+                        <p class="text-gray-400 mb-4"><%= movie.description.substring(0, 100) %>...</p>
+                        
+                        <div class="grid grid-cols-2 gap-2 text-sm mb-4">
+                            <div>
+                                <span class="text-gray-400">Genre:</span>
+                                <span class="text-white"><%= movie.genre %></span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400">Duration:</span>
+                                <span class="text-white"><%= movie.duration %> mins</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400">Director:</span>
+                                <span class="text-white"><%= movie.director %></span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400">Release:</span>
+                                <span class="text-white"><%= new Date(movie.releaseDate).toLocaleDateString() %></span>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-2">
+                            <button onclick="openEditModal('<%= movie._id %>', JSON.parse('<%- JSON.stringify(movie) %>'))"
+                                    class="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded">
+                                Request Edit
+                            </button>
+                            <button onclick="createDeleteRequest('<%= movie._id %>')"
+                                    class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded">
+                                Request Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    </main>
+
+    <!-- Edit Movie Modal -->
+    <div id="editMovieModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="bg-gray-800 rounded-lg w-11/12 md:w-3/4 lg:w-1/2 mx-auto mt-20 p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-xl font-bold">Edit Movie Request</h3>
+                <button onclick="closeEditModal()" class="text-gray-400 hover:text-white">&times;</button>
+            </div>
+            <form id="editMovieForm" class="space-y-4">
+                <input type="hidden" id="editMovieId" name="movieId">
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Movie Title</label>
+                    <input type="text" id="editTitle" name="title" required class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Description</label>
+                    <textarea id="editDescription" name="description" rows="4" required class="w-full px-4 py-2 bg-gray-700 rounded-lg"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Genre</label>
+                    <input type="text" id="editGenre" name="genre" required class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Release Date</label>
+                    <input type="date" id="editReleaseDate" name="releaseDate" required class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Duration (minutes)</label>
+                    <input type="number" id="editDuration" name="duration" required class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Image URL</label>
+                    <input type="url" id="editImage" name="image" required class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Director</label>
+                    <input type="text" id="editDirector" name="director" required class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Language</label>
+                    <select name="language" id="editLanguage" required class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                        <option value="">Select Language</option>
+                        <option value="Tamil">Tamil</option>
+                        <option value="Telugu">Telugu</option>
+                        <option value="Hindi">Hindi</option>
+                        <option value="Malayalam">Malayalam</option>
+                        <option value="Kannada">Kannada</option>
+                        <option value="English">English</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div id="editOtherLanguageDetails" class="hidden">
+                    <label class="block text-sm font-medium mb-2">Specify Language</label>
+                    <input type="text" name="otherLanguage" id="editOtherLanguage" class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Cast</label>
+                    <div id="editCastInputs" class="space-y-2">
+                        <div class="flex gap-2">
+                            <input type="text" name="cast[]" required class="flex-1 px-4 py-2 bg-gray-700 rounded-lg">
+                            <button type="button" onclick="addEditCastInput()" class="bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700">
+                                Add Cast
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-4">
+                    <button type="button" onclick="closeEditModal()" class="px-4 py-2 bg-gray-700 rounded-lg">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700">Submit Edit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        async function createEditRequest(movieId) {
+            const movieData = await collectMovieData();
+            if (!movieData) return;
+
+            try {
+                const response = await fetch('/moderator/movies/edit-request', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        movieId,
+                        updates: movieData
+                    })
+                });
+
+                if (response.ok) {
+                    window.location.href = '/moderator/requests';
+                } else {
+                    throw new Error('Failed to create edit request');
+                }
+            } catch (error) {
+                alert('Error creating edit request: ' + error.message);
+            }
+        }
+
+        function collectMovieData() {
+            // Show a modal or form to collect updated movie data
+            return prompt('Enter updated movie details (temporary solution)');
+        }
+
+        async function createDeleteRequest(movieId) {
+            if (!confirm('Are you sure you want to request deletion of this movie?')) return;
+
+            try {
+                const response = await fetch('/moderator/movies/delete-request', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ movieId })
+                });
+
+                if (response.ok) {
+                    window.location.href = '/moderator/requests';
+                } else {
+                    throw new Error('Failed to create delete request');
+                }
+            } catch (error) {
+                alert('Error creating delete request: ' + error.message);
+            }
+        }
+
+        function openEditModal(movieId, movieData) {
+            console.log('Opening modal for movie:', movieId, movieData); // Debug log
+            const modal = document.getElementById('editMovieModal');
+            
+            // Ensure movieData is an object
+            const data = typeof movieData === 'string' ? JSON.parse(movieData) : movieData;
+            
+            // Fill form fields
+            document.getElementById('editMovieId').value = movieId;
+            document.getElementById('editTitle').value = data.title || '';
+            document.getElementById('editDescription').value = data.description || '';
+            document.getElementById('editGenre').value = data.genre || '';
+            document.getElementById('editReleaseDate').value = data.releaseDate ? new Date(data.releaseDate).toISOString().split('T')[0] : '';
+            document.getElementById('editDuration').value = data.duration || '';
+            document.getElementById('editImage').value = data.image || '';
+            document.getElementById('editDirector').value = data.director || '';
+            document.getElementById('editLanguage').value = data.language || '';
+
+            // Handle language selection
+            const otherLanguageDetails = document.getElementById('editOtherLanguageDetails');
+            if (data.language === 'Other') {
+                otherLanguageDetails.classList.remove('hidden');
+                document.getElementById('editOtherLanguage').value = data.otherLanguage || '';
+            } else {
+                otherLanguageDetails.classList.add('hidden');
+            }
+
+            // Handle cast members
+            setupCastInputs(data.cast || []);
+
+            // Show modal
+            modal.classList.remove('hidden');
+        }
+
+        function setupCastInputs(castMembers) {
+            const container = document.getElementById('editCastInputs');
+            container.innerHTML = ''; // Clear existing inputs
+
+            castMembers.forEach(member => {
+                addCastMember(member);
+            });
+
+            // Add empty input for new cast member
+            addCastMember('');
+        }
+
+        function addCastMember(value = '') {
+            const container = document.getElementById('editCastInputs');
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 mb-2';
+            div.innerHTML = `
+                <input type="text" name="cast[]" value="${value}" 
+                       class="flex-1 px-4 py-2 bg-gray-700 rounded-lg" required>
+                <button type="button" onclick="this.parentElement.remove()" 
+                        class="bg-red-600 px-4 py-2 rounded-lg hover:bg-red-700">
+                    Remove
+                </button>
+            `;
+            container.appendChild(div);
+        }
+
+        function closeEditModal() {
+            document.getElementById('editMovieModal').classList.add('hidden');
+        }
+
+        function addEditCastInput() {
+            const container = document.getElementById('editCastInputs');
+            const newInput = document.createElement('div');
+            newInput.className = 'flex gap-2';
+            newInput.innerHTML = `
+                <input type="text" name="cast[]" required class="flex-1 px-4 py-2 bg-gray-700 rounded-lg">
+                <button type="button" onclick="this.parentElement.remove()" 
+                        class="bg-red-600 px-4 py-2 rounded-lg hover:bg-red-700">
+                    Remove
+                </button>
+            `;
+            container.appendChild(newInput);
+        }
+
+        // Add language change handler
+        document.getElementById('editLanguage').addEventListener('change', function() {
+            const otherDetails = document.getElementById('editOtherLanguageDetails');
+            otherDetails.style.display = this.value === 'Other' ? 'block' : 'none';
+        });
+
+        document.getElementById('editMovieForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const movieId = formData.get('movieId');
+            
+            try {
+                const response = await fetch('/moderator/movies/edit-request', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        movieId,
+                        updates: Object.fromEntries(formData)
+                    })
+                });
+
+                if (response.ok) {
+                    window.location.href = '/moderator/requests';
+                } else {
+                    throw new Error('Failed to create edit request');
+                }
+            } catch (error) {
+                alert('Error creating edit request: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

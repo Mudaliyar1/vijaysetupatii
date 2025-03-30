@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <header class="p-6 bg-gray-800 shadow-lg">
+        <div class="flex justify-between items-center">
+            <h1 class="text-4xl font-bold neon-text">Request Management</h1>
+            <button id="hamburger" class="md:hidden text-white">☰</button>
+            <nav id="navbar" class="hidden md:flex space-x-4">
+                <a href="/admin/dashboard" class="hover:text-blue-400">Dashboard</a>
+                <a href="/admin/movies" class="hover:text-blue-400">Movies</a>
+                <a href="/admin/awards" class="hover:text-blue-400">Awards</a>
+                <a href="/admin/users" class="hover:text-blue-400">Users</a>
+                <a href="/admin/messages" class="hover:text-blue-400">Messages</a>
+                <a href="/admin/requests" class="hover:text-blue-400">Requests</a>
+            </nav>
+        </div>
+    </header>
+    <main class="p-6">
+        <h2 class="text-3xl font-semibold mb-4">Moderator Requests</h2>
+        <ul class="space-y-4">
+            <% requests.forEach(request => { %>
+            <li class="p-4 bg-gray-800 rounded-lg shadow-md">
+                <h3 class="text-2xl font-bold">Request Type: <%= request.type %></h3>
+                <p class="text-lg">Created By: <%= request.createdBy %></p>
+                <p class="text-lg">Status: <%= request.status %></p>
+                <form action="/admin/requests/<%= request._id %>/approve" method="POST" class="inline">
+                    <button class="px-4 py-2 bg-green-600 rounded hover:bg-green-700">Approve</button>
+                </form>
+                <form action="/admin/requests/<%= request._id %>/reject" method="POST" class="inline">
+                    <button class="px-4 py-2 bg-red-600 rounded hover:bg-red-700">Reject</button>
+                </form>
+            </li>
+            <% }); %>
+        </ul>
+    </main>
+    <footer class="p-4 bg-gray-800 text-center">
+        <p>&copy; 2023 Vijay Sethupathi. All rights reserved.</p>
+    </footer>
+    <script>
+        const hamburger = document.getElementById('hamburger');
+        const navbar = document.getElementById('navbar');
+        hamburger.addEventListener('click', () => {
+            navbar.classList.toggle('hidden');
+        });
+    </script>
+    <style>
+        .neon-text {
+            color: #0ff;
+            text-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 20px #0ff;
+        }
+    </style>
+</body>
+</html>

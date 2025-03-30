@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= movie.title %> - Movie Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+    <%- include('partials/sidebar', { isAdmin: false }) %>
+    
+    <header class="bg-gray-800 py-6 shadow-lg sticky top-0 z-10 backdrop-blur-xl">
+        <div class="container mx-auto px-4 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <a href="/movies" class="text-gray-400 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </a>
+                <h1 class="text-3xl font-bold neon-text"><%= movie.title %></h1>
+            </div>
+            <nav class="hidden md:flex items-center space-x-6">
+                <a href="/" class="text-gray-300 hover:text-blue-400 transition-colors">Home</a>
+                <a href="/about" class="text-gray-300 hover:text-blue-400 transition-colors">About</a>
+                <a href="/movies" class="text-gray-300 hover:text-blue-400 transition-colors">Movies</a>
+                <a href="/awards" class="text-gray-300 hover:text-blue-400 transition-colors">Awards</a>
+                <a href="/message" class="text-gray-300 hover:text-blue-400 transition-colors">Message</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="bg-gray-800 rounded-xl shadow-xl overflow-hidden backdrop-blur-sm">
+            <!-- Hero Section -->
+            <div class="relative h-[500px] rounded-t-xl overflow-hidden">
+                <img src="<%= movie.image %>" alt="<%= movie.title %>" 
+                     class="w-full h-full object-cover opacity-20">
+                <div class="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
+                <div class="absolute bottom-8 left-8">
+                    <h2 class="text-5xl font-bold text-white mb-4 neon-text"><%= movie.title %></h2>
+                    <div class="flex flex-wrap gap-4 text-sm">
+                        <span class="px-3 py-1 bg-blue-600 rounded-full"><%= movie.genre %></span>
+                        <span class="px-3 py-1 bg-green-600 rounded-full"><%= movie.duration %> mins</span>
+                        <span class="px-3 py-1 bg-purple-600 rounded-full">
+                            <%= movie.releaseDate ? new Date(movie.releaseDate).getFullYear() : 'N/A' %>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Section -->
+            <div class="p-8 space-y-8">
+                <!-- Description -->
+                <div class="glassmorphism p-6 rounded-xl">
+                    <h3 class="text-2xl font-semibold text-blue-400 mb-4">Synopsis</h3>
+                    <p class="text-gray-300 leading-relaxed text-lg"><%= movie.description %></p>
+                </div>
+
+                <!-- Details Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glassmorphism p-6 rounded-xl">
+                        <h3 class="text-2xl font-semibold text-blue-400 mb-4">Director</h3>
+                        <p class="text-gray-200 text-lg"><%= movie.director %></p>
+                    </div>
+                    <div class="glassmorphism p-6 rounded-xl">
+                        <h3 class="text-2xl font-semibold text-blue-400 mb-4">Release Date</h3>
+                        <p class="text-gray-200 text-lg">
+                            <%= movie.releaseDate ? new Date(movie.releaseDate).toLocaleDateString('en-US', { 
+                                year: 'numeric', month: 'long', day: 'numeric' 
+                            }) : 'N/A' %>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Cast Section -->
+                <div class="glassmorphism p-6 rounded-xl">
+                    <h3 class="text-2xl font-semibold text-blue-400 mb-4">Cast Members</h3>
+                    <div class="flex flex-wrap gap-3">
+                        <% movie.cast.forEach(actor => { %>
+                            <span class="px-4 py-2 bg-gray-700 rounded-full text-gray-200 hover:bg-gray-600 transition-colors cursor-pointer">
+                                <%= actor %>
+                            </span>
+                        <% }); %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 py-6 mt-8">
+        <div class="container mx-auto px-4 text-center text-gray-400">
+            <p>&copy; 2025 Vijay Sethupathi. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <style>
+        .neon-text {
+            color: #0ff;
+            text-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff;
+        }
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</body>
+</html>

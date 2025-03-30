@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Message - Vijay Sethupathi</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .hamburger-menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100%;
+            width: 250px;
+            background-color: #1f2937;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 50;
+        }
+
+        .hamburger-menu.active {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+    <header class="bg-gray-800 p-4 shadow-lg flex justify-between items-center">
+        <h1 class="text-3xl text-cyan-400 font-bold">Send a Message</h1>
+        <button id="menuBtn" class="text-white text-3xl">&#9776;</button>
+    </header>
+
+    <div id="menu" class="hamburger-menu">
+        <button id="closeBtn" class="text-white text-3xl p-4">&times;</button>
+        <nav class="mt-4 space-y-4 p-4">
+            <a href="/" class="block text-white hover:text-cyan-400">Home</a>
+            <a href="/about" class="block text-white hover:text-cyan-400">About</a>
+            <a href="/movies" class="block text-white hover:text-cyan-400">Movies</a>
+            <a href="/awards" class="block text-white hover:text-cyan-400">Awards</a>
+            <a href="/message" class="block text-white hover:text-cyan-400">Message</a>
+            <% if (typeof user !== 'undefined' && user) { %>
+                <a href="/profile" class="block text-white hover:text-cyan-400">Profile</a>
+                <a href="/users/search" class="block text-white hover:text-cyan-400">Search Users</a>
+                <a href="/logout" class="block text-red-500 hover:text-red-700">Logout</a>
+            <% } else { %>
+                <a href="/login" class="block text-white hover:text-cyan-400">Login</a>
+                <a href="/register" class="block text-white hover:text-cyan-400">Register</a>
+            <% } %>
+        </nav>
+    </div>
+
+    <main class="p-6">
+        <section class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6 max-w-lg mx-auto">
+            <h2 class="text-2xl font-bold mb-4">Leave a Message</h2>
+            <form action="/message" method="POST" class="space-y-4">
+                <div>
+                    <label for="name" class="block mb-2 text-gray-300">Your Name</label>
+                    <input type="text" id="name" name="name" required class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
+                </div>
+                <div>
+                    <label for="message" class="block mb-2 text-gray-300">Your Message</label>
+                    <textarea id="message" name="message" rows="4" required class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600"></textarea>
+                </div>
+                <button type="submit" class="w-full py-2 bg-cyan-600 hover:bg-cyan-700 rounded text-white">Send</button>
+            </form>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 py-4 text-center text-gray-500">
+        <p>&copy; 2025 Vijay Sethupathi. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const menuBtn = document.getElementById('menuBtn');
+        const closeBtn = document.getElementById('closeBtn');
+        const menu = document.getElementById('menu');
+
+        menuBtn.addEventListener('click', () => {
+            menu.classList.add('active');
+        });
+
+        closeBtn.addEventListener('click', () => {
+            menu.classList.remove('active');
+        });
+    </script>
+</body>
+</html>
