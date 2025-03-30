@@ -11,19 +11,26 @@ const { MaintenanceMode } = require('./models'); // Add this import
 // Add better error handling for model loading
 try {
     const models = require('./models');
-    global.models = models; // Make models available globally
     
-    console.log('Models loaded:', Object.keys(models));
-
-    // Check for Movie model specifically
-    if (!models.Movie) {
-        console.warn('Warning: Movie model not found, creating it');
-        const Movie = require('./models/Movie');
-        models.Movie = Movie;
+    // Verify all required models are loaded
+    const requiredModels = [
+        'Movie', 'Award', 'User', 'Request', 'MaintenanceMode',
+        'Message', 'Post', 'Notification', 'MaintenanceLoginAttempt',
+        'MaintenanceVisitor'
+    ];
+    
+    const missingModels = requiredModels.filter(model => !models[model]);
+    
+    if (missingModels.length) {
+        console.warn('Warning: Missing required models:', missingModels);
     }
+    
+    // Make models globally available
+    global.models = models;
+    
 } catch (error) {
-    console.error('Error loading models:', error);
-    // Continue running with limited functionality
+    console.error('Fatal error loading models:', error);
+    process.exit(1);
 }
 
 const app = express();
