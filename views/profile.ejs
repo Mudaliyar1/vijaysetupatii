@@ -380,15 +380,19 @@
                                 <% post.comments.forEach(comment => { %>
                                     <div class="flex justify-between items-start bg-gray-600/50 p-2 rounded-lg">
                                         <div>
-                                            <a href="/users/<%= comment.userId.username %>" class="font-semibold text-blue-400 hover:text-blue-300">
-                                                <%= comment.userId.username %>
-                                            </a>
+                                            <% if (comment.userId) { %>
+                                                <a href="/users/<%= comment.userId.username %>" class="font-semibold text-blue-400 hover:text-blue-300">
+                                                    <%= comment.userId.username %>
+                                                </a>
+                                            <% } else { %>
+                                                <span class="font-semibold text-gray-400">[Deleted User]</span>
+                                            <% } %>
                                             <p class="text-sm text-gray-300"><%= comment.text %></p>
                                             <span class="text-xs text-gray-500">
                                                 <%= new Date(comment.createdAt).toLocaleDateString() %>
                                             </span>
                                         </div>
-                                        <% if (user.id === comment.userId.toString()) { %>
+                                        <% if (comment.userId && user.id === comment.userId.toString()) { %>
                                             <form action="/posts/<%= post._id %>/comments/<%= comment._id %>?_method=DELETE" method="POST">
                                                 <button type="submit" class="text-red-400 hover:text-red-300">Delete</button>
                                             </form>
