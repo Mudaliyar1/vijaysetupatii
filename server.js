@@ -8,12 +8,26 @@ const methodOverride = require('method-override');
 const requestIp = require('request-ip'); // Add this line
 const { MaintenanceMode } = require('./models'); // Add this import
 
-// Update model imports to use try-catch for graceful error handling
+// Update model loading with better error handling
 try {
-    require('./models');
+    const models = require('./models');
+    console.log('Models loaded:', Object.keys(models));
+    
+    // Check for required models but don't try to recompile them
+    const requiredModels = [
+        'Movie', 'Award', 'User', 'Message', 
+        'Post', 'Notification', 'Request',
+        'MaintenanceMode', 'MaintenanceLoginAttempt', 'MaintenanceVisitor'
+    ];
+    
+    const missingModels = requiredModels.filter(model => !models[model]);
+    if (missingModels.length) {
+        console.warn('Warning: Missing models:', missingModels);
+        // Continue running even with missing models
+    }
 } catch (error) {
     console.error('Error loading models:', error);
-    process.exit(1);
+    // Continue running with limited functionality
 }
 
 const app = express();

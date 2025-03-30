@@ -1,26 +1,23 @@
 const path = require('path');
+const fs = require('fs');
 
-// Use absolute paths to ensure correct resolution
-const User = require(path.join(__dirname, 'User'));
-const MaintenanceMode = require(path.join(__dirname, 'MaintenanceMode'));
-const Movie = require(path.join(__dirname, 'Movie'));
-const Award = require(path.join(__dirname, 'Award'));
-const Message = require(path.join(__dirname, 'Message'));
-const Post = require(path.join(__dirname, 'Post'));
-const Notification = require(path.join(__dirname, 'Notification'));
-const Request = require(path.join(__dirname, 'Request'));
-const MaintenanceLoginAttempt = require(path.join(__dirname, 'MaintenanceLoginAttempt'));
-const MaintenanceVisitor = require(path.join(__dirname, 'MaintenanceVisitor'));
+// Initialize models object
+const models = {};
 
-module.exports = {
-    User,
-    MaintenanceMode,
-    Movie,
-    Award,
-    Message,
-    Post,
-    Notification,
-    Request,
-    MaintenanceLoginAttempt,
-    MaintenanceVisitor
-};
+// Get all model files
+const modelFiles = fs.readdirSync(__dirname)
+    .filter(file => file !== 'index.js' && file.endsWith('.js'));
+
+// Load each model with error handling and prevent duplicate compilation
+modelFiles.forEach(file => {
+    try {
+        const modelName = path.basename(file, '.js');
+        // Use existing model if already compiled
+        models[modelName] = require(path.join(__dirname, file));
+        console.log(`Loaded model: ${modelName}`);
+    } catch (error) {
+        console.error(`Error loading model ${file}:`, error.message);
+    }
+});
+
+module.exports = models;
