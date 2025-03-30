@@ -19,7 +19,7 @@ router.get('/dashboard', isAdmin, async (req, res) => {
             Movie.countDocuments(),
             Award.countDocuments(),
             User.countDocuments(),
-            Request.find({ status: 'Pending' }).count()
+            Request.find({ status: 'Pending' }).countDocuments()
         ]);
 
         res.render('admin/dashboard', {
@@ -42,37 +42,6 @@ router.get('/movies', isAdmin, async (req, res) => {
     }
 });
 
-// Awards routes
-router.get('/awards', isAdmin, async (req, res) => {
-    try {
-        const awards = await Award.find().populate('movie');
-        res.render('admin/awards', { awards, user: req.session.user });
-    } catch (error) {
-        res.status(500).send('Error loading awards');
-    }
-});
-
-// Users routes
-router.get('/users', isAdmin, async (req, res) => {
-    try {
-        const users = await User.find().select('-password');
-        res.render('admin/users', { users, user: req.session.user });
-    } catch (error) {
-        res.status(500).send('Error loading users');
-    }
-});
-
-// Requests routes
-router.get('/requests', isAdmin, async (req, res) => {
-    try {
-        const requests = await Request.find().sort('-createdAt');
-        res.render('admin/requests', { requests, user: req.session.user });
-    } catch (error) {
-        res.status(500).send('Error loading requests');
-    }
-});
-
-// Handle post requests
 router.post('/movies', isAdmin, async (req, res) => {
     try {
         const movie = new Movie(req.body);
@@ -80,6 +49,16 @@ router.post('/movies', isAdmin, async (req, res) => {
         res.redirect('/admin/movies');
     } catch (error) {
         res.status(500).send('Error creating movie');
+    }
+});
+
+// Awards routes
+router.get('/awards', isAdmin, async (req, res) => {
+    try {
+        const awards = await Award.find().populate('movie');
+        res.render('admin/awards', { awards, user: req.session.user });
+    } catch (error) {
+        res.status(500).send('Error loading awards');
     }
 });
 
@@ -93,6 +72,16 @@ router.post('/awards', isAdmin, async (req, res) => {
     }
 });
 
+// Users routes
+router.get('/users', isAdmin, async (req, res) => {
+    try {
+        const users = await User.find().select('-password');
+        res.render('admin/users', { users, user: req.session.user });
+    } catch (error) {
+        res.status(500).send('Error loading users');
+    }
+});
+
 router.post('/users', isAdmin, async (req, res) => {
     try {
         const user = new User(req.body);
@@ -100,6 +89,47 @@ router.post('/users', isAdmin, async (req, res) => {
         res.redirect('/admin/users');
     } catch (error) {
         res.status(500).send('Error creating user');
+    }
+});
+
+// Requests routes
+router.get('/requests', isAdmin, async (req, res) => {
+    try {
+        const requests = await Request.find().sort('-createdAt');
+        res.render('admin/requests', { requests, user: req.session.user });
+    } catch (error) {
+        res.status(500).send('Error loading requests');
+    }
+});
+
+// Maintenance Mode routes
+router.get('/maintenance', isAdmin, async (req, res) => {
+    try {
+        const maintenance = await MaintenanceMode.findOne();
+        res.render('admin/maintenance', { maintenance, user: req.session.user });
+    } catch (error) {
+        res.status(500).send('Error loading maintenance settings');
+    }
+});
+
+router.post('/maintenance', isAdmin, async (req, res) => {
+    try {
+        const { enabled, message, reason, estimatedDuration } = req.body;
+        let maintenance = await MaintenanceMode.findOne();
+
+        if (!maintenance) {
+            maintenance = new MaintenanceMode();
+        }
+
+        maintenance.enabled = enabled === 'on';
+        maintenance.message = message;
+        maintenance.reason = reason;
+        maintenance.estimatedDuration = estimatedDuration;
+        await maintenance.save();
+
+        res.redirect('/admin/maintenance');
+    } catch (error) {
+        res.status(500).send('Error saving maintenance settings');
     }
 });
 
