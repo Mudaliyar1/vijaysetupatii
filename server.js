@@ -66,8 +66,10 @@ mongoose.connection.once('connected', () => {
     setInterval(performMaintenanceCheck, MAINTENANCE_CHECK_INTERVAL);
 });
 
-// Session setup
+// Session setup with sessionstore
+const sessionstore = require('sessionstore');
 app.use(session({
+    store: sessionstore.createSessionStore(),
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,

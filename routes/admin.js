@@ -5,6 +5,7 @@ const { sanitizeJson } = require('../utils/sanitizer');
 const { safeStringify } = require('../utils/jsonHelper');
 const he = require('he'); // Import he for encoding
 const requestIp = require('request-ip'); // Add this after existing imports
+const sessionStore = require('sessionstore'); // Add this line to use session store
 
 // Import all required models
 const Movie = require('../models/movie');
@@ -98,6 +99,31 @@ router.use((req, res, next) => {
 // Admin dashboard
 router.get('/dashboard', isAuthenticated, isAdmin, async (req, res) => {
     try {
+        // Query active sessions using session store's list method
+        let activeUsers = [];
+        try {
+            const store = req.sessionStore;
+            const sessions = await new Promise((resolve, reject) => {
+                store.all((err, sessions) => {
+                    if (err) reject(err);
+                    resolve(sessions || []);
+                });
+            });
+            activeUsers = sessions
+                .map(session => session.user)
+                .filter(user => user);
+        } catch (error) {
+            console.error('Error fetching active sessions:', error);
+        }
+
+        // Calculate maintenance statistics
+        const maintenanceStats = {
+            totalMaintenance: await MaintenanceMode.countDocuments(),
+            avgDuration: await calculateAverageDuration(),
+            totalVisits: await MaintenanceVisitor.countDocuments(),
+            autoDisabled: await MaintenanceMode.countDocuments({ autoDisabled: true })
+        };
+
         // Basic stats that won't fail if some collections are empty
         const [maintenance, stats] = await Promise.all([
             MaintenanceMode.findOne({ isEnabled: true }),
@@ -132,12 +158,9 @@ router.get('/dashboard', isAuthenticated, isAdmin, async (req, res) => {
             },
             recentMovies: recentMovies || [],
             recentAwards: recentAwards || [],
-            maintenanceStats: {
-                totalMaintenance: 0,
-                avgDuration: 0,
-                totalVisits: 0,
-                autoDisabled: 0
-            }
+            activeUsersList: activeUsers || [],
+            activeUsersList: activeUsers, // Pass active users to the template
+            maintenanceStats
         });
     } catch (error) {
         console.error('Dashboard error:', error);
