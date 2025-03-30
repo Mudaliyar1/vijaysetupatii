@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
-const MaintenanceMode = require('../models/MaintenanceMode'); // Added MaintenanceMode model
+const path = require('path');
+const models = require(path.join(__dirname, '..', 'models'));
+const { User, MaintenanceMode } = models;
 
 router.post('/login', async (req, res) => {
     try {

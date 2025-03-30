@@ -1,4 +1,6 @@
-const MaintenanceMode = require('../models/MaintenanceMode');
+const path = require('path');
+const models = require(path.join(__dirname, '..', 'models'));
+const { MaintenanceMode } = models;
 
 const maintenanceCheck = async (req, res, next) => {
     try {

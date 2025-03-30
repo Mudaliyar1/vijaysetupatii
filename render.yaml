@@ -2,12 +2,8 @@ services:
   - type: web
     name: vijaysetupatii
     env: node
-    buildCommand: |
-      mkdir -p dist/models
-      cp -r models/*.js dist/models/
-      cp -r routes middleware utils views public server.js package.json dist/
-      cd dist && npm install
-    startCommand: cd dist && node server.js
+    buildCommand: npm install
+    startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
