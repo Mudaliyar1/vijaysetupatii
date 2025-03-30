@@ -2,10 +2,9 @@ const mongoose = require('mongoose');
 
 const awardSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    year: { type: Number, required: true },
-    category: String,
-    recipient: String,
-    movie: { type: mongoose.Schema.Types.ObjectId, ref: 'Movie' }
-}, { timestamps: true });
+    description: { type: String, required: true },
+    year: { type: Number, required: true }, // Year of the award
+    category: { type: String, required: true } // Award category
+});
 
 module.exports = mongoose.model('Award', awardSchema);

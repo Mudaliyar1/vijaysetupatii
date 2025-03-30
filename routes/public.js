@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const path = require('path');
-
-// Use absolute paths with __dirname
-const models = require(path.join(__dirname, '..', 'models'));
-const { Movie, Award, Message, User, Post, Notification, MaintenanceMode } = models;
-
-const { isAuthenticated, isUser } = require('../middleware/auth');
+const Movie = require('../models/Movie'); // Import Movie model
+const Award = require('../models/Award'); // Import Award model
+const Message = require('../models/Message'); // Import Message model
+const User = require('../models/User'); // Import User model
+const Post = require('../models/Post'); // Import Post model
+const Notification = require('../models/Notification'); // Import Notification model
+const MaintenanceMode = require('../models/MaintenanceMode'); // Import MaintenanceMode model
+const { isAuthenticated, isUser } = require('../middleware/auth'); // Import authentication middleware
 const methodOverride = require('method-override');
 const mongoose = require('mongoose');
 router.use(methodOverride('_method'));
@@ -67,12 +68,8 @@ router.get('/about', (req, res) => {
     res.render('about', { user: req.session.user || null });
 });
 router.get('/movies', async (req, res) => {
-    try {
-        const movies = await Movie.find();
-        res.json(movies);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+    const movies = await Movie.find(); // Fetch movies from the database
+    res.render('movies', { movies, user: req.session.user || null });
 });
 router.get('/movies/:id', async (req, res) => {
     const movie = await Movie.findById(req.params.id);

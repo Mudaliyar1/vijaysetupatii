@@ -124,22 +124,6 @@
                 <canvas id="activityChart"></canvas>
             </div>
         </div>
-
-        <!-- Basic Moderator Dashboard View -->
-        <div class="bg-gray-800 p-6 rounded-lg mt-8">
-            <h1 class="text-2xl font-bold mb-4">Moderator Dashboard</h1>
-            <div class="text-gray-400 mb-4">
-                <p>Movies: <%= stats.movies %></p>
-                <p>Awards: <%= stats.awards %></p>
-                <p>My Requests: <%= stats.requests %></p>
-            </div>
-            <nav class="space-x-4">
-                <a href="/moderator/movies" class="text-blue-400 hover:underline">Manage Movies</a>
-                <a href="/moderator/awards" class="text-blue-400 hover:underline">Manage Awards</a>
-                <a href="/moderator/requests" class="text-blue-400 hover:underline">My Requests</a>
-                <a href="/logout" class="text-red-400 hover:underline">Logout</a>
-            </nav>
-        </div>
     </main>
 
     <!-- Add Chart.js -->

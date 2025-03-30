@@ -1,24 +1,95 @@
-<header class="bg-gray-800 shadow-lg p-6">
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl font-bold neon-text"><%= title %></h1>
-        <div class="flex items-center space-x-6">
-            <!-- Navigation Links -->
-            <nav class="flex space-x-6">
-                <a href="/admin/dashboard" class="text-gray-300 hover:text-white">Dashboard</a>
-                <a href="/admin/movies" class="text-gray-300 hover:text-white">Movies</a>
-                <a href="/admin/awards" class="text-gray-300 hover:text-white">Awards</a>
-                <a href="/admin/users" class="text-gray-300 hover:text-white">Users</a>
-                <a href="/admin/requests" class="text-gray-300 hover:text-white">Requests</a>
-                <a href="/admin/maintenance" class="text-gray-300 hover:text-white">Maintenance</a>
-                <a href="/admin/messages" class="text-gray-300 hover:text-white">Messages</a>
+<% if (user.role === 'Admin' && typeof maintenance !== 'undefined' && maintenance?.isEnabled) { %>
+    <div class="bg-red-500/20 text-red-400 px-4 py-2 text-center">
+        <span class="font-bold">Maintenance Mode Active</span>
+        <button onclick="stopMaintenance()" 
+                class="ml-4 bg-red-600 hover:bg-red-700 px-3 py-1 rounded-lg text-white">
+            Disable Maintenance
+        </button>
+    </div>
+<% } %>
+
+<header class="bg-gray-800 p-6 shadow-lg">
+    <div class="container mx-auto">
+        <div class="flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-blue-400"><%= title %></h1>
+            <nav class="hidden md:flex items-center space-x-6">
+                <% const menuItems = [
+                    { path: '/admin/dashboard', label: 'Dashboard' },
+                    { path: '/admin/movies', label: 'Movies' },
+                    { path: '/admin/awards', label: 'Awards' },
+                    { path: '/admin/users', label: 'Users' },
+                    { path: '/admin/requests', label: 'Requests' },
+                    { path: '/admin/maintenance', label: 'Maintenance' },
+                    { path: '/admin/messages', label: 'Messages' }
+                ]; %>
+
+                <% menuItems.forEach(item => { %>
+                    <a href="<%= item.path %>" 
+                       class="text-gray-300 hover:text-white transition-colors <%= path === item.path ? 'text-blue-400 font-semibold' : '' %>">
+                        <%= item.label %>
+                    </a>
+                <% }); %>
+
+                <a href="/logout" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg ml-4">
+                    Logout
+                </a>
             </nav>
-            <div class="flex items-center space-x-4">
-                <span class="text-gray-400"><%= user.username %></span>
-                <a href="/logout" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">Logout</a>
-            </div>
+            <button id="mobileMenu" class="md:hidden">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
+                </svg>
+            </button>
         </div>
     </div>
 </header>
+
+<!-- Mobile Menu -->
+<div id="mobileMenuContent" class="md:hidden hidden bg-gray-800 p-4">
+    <nav class="space-y-4">
+        <% menuItems.forEach(item => { %>
+            <a href="<%= item.path %>" 
+               class="block text-gray-300 hover:text-white transition-colors <%= path === item.path ? 'text-blue-400 font-semibold' : '' %>">
+                <%= item.label %>
+            </a>
+        <% }); %>
+        <a href="/logout" class="block text-red-400 hover:text-red-300">Logout</a>
+    </nav>
+</div>
+
+<script>
+    const mobileMenuBtn = document.getElementById('mobileMenu');
+    const mobileMenuContent = document.getElementById('mobileMenuContent');
+
+    mobileMenuBtn.addEventListener('click', () => {
+        mobileMenuContent.classList.toggle('hidden');
+    });
+
+    async function stopMaintenance() {
+        if (!confirm('Are you sure you want to disable maintenance mode?')) return;
+        
+        try {
+            const response = await fetch('/admin/maintenance/stop', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (!response.ok) throw new Error('Failed to stop maintenance');
+            
+            const result = await response.json();
+            if (result.success) {
+                window.location.reload();
+            } else {
+                throw new Error(result.error || 'Failed to stop maintenance');
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+            console.error('Stop maintenance error:', error);
+        }
+    }
+</script>
 
 <% if (typeof message !== 'undefined') { %>
     <div class="bg-green-500/20 text-green-400 p-4 mb-6">

@@ -9,207 +9,214 @@
 <body class="bg-gray-900 text-white">
     <main class="min-h-screen flex items-center justify-center">
         <div class="text-center">
-            <h1 class="text-4xl font-bold mb-8 text-blue-400">Security Check & Workspace Setup</h1>
+            <h1 class="text-4xl font-bold mb-8 text-blue-400">Setting Up Your Workspace</h1>
             
             <!-- Connection Status -->
             <div id="connectionStatus" class="mb-8">
-                <div class="flex items-center justify-center space-x-2">
-                    <div id="connectionIndicator" class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                    <span id="connectionText" class="text-yellow-400">Checking connection...</span>
+                <div class="flex items-center justify-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <div id="connectionIndicator" class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <span id="connectionText" class="text-yellow-400">Checking connection...</span>
+                    </div>
+                    <div class="text-sm">
+                        <span id="latencyText" class="text-gray-400">Latency: </span>
+                        <span id="latencyValue" class="font-mono">--</span>
+                        <span class="text-gray-400">ms</span>
+                    </div>
                 </div>
-                <div id="speedInfo" class="text-sm text-gray-400 mt-2"></div>
             </div>
 
             <!-- Progress Section -->
             <div class="max-w-md mx-auto mb-8">
                 <div class="relative pt-1">
-                    <div class="flex mb-2 items-center justify-between">
-                        <div>
-                            <span id="progressText" 
-                                  class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full bg-blue-600">
-                                0%
-                            </span>
-                        </div>
-                        <div class="text-right">
-                            <span id="statusText" class="text-xs font-semibold text-blue-400">
-                                Testing connection speed...
-                            </span>
-                        </div>
-                    </div>
                     <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-700">
                         <div id="progressBar" 
-                             class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 transition-all duration-500"
-                             style="width: 0%">
+                             class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500"
+                             style="width: 0%; background-color: rgb(239, 68, 68);">
                         </div>
                     </div>
+                    <div id="statusText" class="text-sm text-gray-400">
+                        Preparing your workspace...
+                    </div>
+                    <div id="progressPercentage" class="text-lg font-bold text-blue-400 mt-2">
+                        0%
+                    </div>
+                    <div id="setupStatus" class="text-sm text-gray-400 mt-2">
+                        Initializing...
+                    </div>
                 </div>
-            </div>
-
-            <div id="loadingText" class="text-gray-400 animate-pulse">
-                Preparing workspace...
-            </div>
-
-            <!-- Error Message -->
-            <div id="errorMessage" class="hidden mt-8 bg-red-500/20 text-red-400 p-4 rounded-lg">
-                <p class="mb-4">Connection appears to be slow or unstable.</p>
-                <button onclick="retryConnection()" 
-                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">
-                    Retry Connection
-                </button>
             </div>
         </div>
     </main>
 
     <script>
-        const MAX_LOAD_TIME = 5000; // Reduced to 5 seconds
-        const REDIRECT_DELAY = 5000; // 5 seconds display for error message
-        let connectionSpeed = 0;
-        let failedAttempts = 0;
-        const MAX_ATTEMPTS = 1; // Reduced to 1 attempt
+        let progress = 0;
+        let setupStartTime = Date.now();
+        const MAX_SETUP_TIME = 10000;
+        const finalRedirect = '<%= redirectUrl %>';
+        let connectionQuality = 'checking';
+        let lastLatency = 0;
+        let progressIncrement = 0;
 
-        // Update connection color thresholds
-        const LATENCY = {
-            GOOD: 200,    // Under 200ms = green
-            MODERATE: 500, // Under 500ms = yellow
-            BAD: 1000     // Over 1000ms = red
-        };
+        // Add randomization to progress steps
+        const getRandomProgress = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
 
-        // Add artificial delay to simulate network latency
-        function artificialDelay(min, max) {
-            const delay = Math.floor(Math.random() * (max - min + 1) + min);
-            return new Promise(resolve => setTimeout(resolve, delay));
-        }
+        const setupStages = [
+            { progress: getRandomProgress(0, 15), message: 'Checking connection...', color: 'rgb(156, 163, 175)' },
+            { progress: getRandomProgress(20, 35), message: 'Verifying role...', color: 'rgb(234, 179, 8)' },
+            { progress: getRandomProgress(40, 65), message: 'Setting up environment...', color: 'rgb(59, 130, 246)' },
+            { progress: getRandomProgress(70, 85), message: 'Finalizing setup...', color: 'rgb(34, 197, 94)' },
+            { progress: 100, message: 'Done!', color: 'rgb(34, 197, 94)' }
+        ];
 
         async function checkConnection() {
-            const startTime = performance.now();
+            const start = performance.now();
             try {
-                const response = await Promise.race([
-                    fetch('/auth/ping'),
-                    new Promise((_, reject) => 
-                        setTimeout(() => reject(new Error('Connection timeout')), MAX_LOAD_TIME)
-                    )
-                ]);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                const response = await fetch('/auth/ping', { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (!response.ok) throw new Error('Connection failed');
                 
-                const endTime = performance.now();
-                connectionSpeed = endTime - startTime;
+                lastLatency = Math.round(performance.now() - start);
+                updateConnectionStatus(lastLatency);
                 
-                // Fast connection = faster progress
-                if (connectionSpeed < 100) {
-                    // Super fast connection, minimal delays
-                    await artificialDelay(50, 100);
-                } else if (connectionSpeed > MAX_LOAD_TIME) {
-                    throw new Error('Connection too slow');
-                }
+                // Adjust progress increment based on connection quality
+                progressIncrement = connectionQuality === 'good' ? 2 : 
+                                  connectionQuality === 'medium' ? 1 : 0.5;
                 
-                document.getElementById('speedInfo').textContent = 
-                    `Network Latency: ${Math.round(connectionSpeed)}ms`;
-                
-                updateConnectionStatus();
-                return connectionSpeed;
+                return lastLatency;
             } catch (error) {
-                showTimeoutError();
+                updateConnectionStatus(-1);
+                return -1;
+            }
+        }
+
+        function updateConnectionStatus(latency) {
+            const indicator = document.getElementById('connectionIndicator');
+            const text = document.getElementById('connectionText');
+            const latencyValue = document.getElementById('latencyValue');
+
+            if (latency === -1) {
+                connectionQuality = 'dead';
+                indicator.className = 'w-3 h-3 rounded-full bg-red-500';
+                text.className = 'text-red-400';
+                text.textContent = 'Connection Dead';
+                latencyValue.textContent = '--';
                 return false;
             }
-        }
 
-        function updateConnectionStatus() {
-            const indicator = document.getElementById('connectionIndicator');
-            const connectionText = document.getElementById('connectionText');
-            const speedInfo = document.getElementById('speedInfo');
+            latencyValue.textContent = latency;
 
-            if (connectionSpeed < LATENCY.GOOD) {
-                indicator.className = 'w-3 h-3 rounded-full bg-green-500';
-                connectionText.textContent = 'Connection: Excellent';
-                connectionText.className = 'text-green-400';
-                return 200;
-            } else if (connectionSpeed < LATENCY.MODERATE) {
+            if (latency < 100) {
+                connectionQuality = 'good';
+                indicator.className = 'w-3 h-3 rounded-full bg-green-500 animate-pulse';
+                text.className = 'text-green-400';
+                text.textContent = 'Connection Good';
+            } else if (latency < 300) {
+                connectionQuality = 'medium';
                 indicator.className = 'w-3 h-3 rounded-full bg-yellow-500';
-                connectionText.textContent = 'Connection: Moderate';
-                connectionText.className = 'text-yellow-400';
-                return 500;
+                text.className = 'text-yellow-400';
+                text.textContent = 'Connection Medium';
             } else {
+                connectionQuality = 'poor';
                 indicator.className = 'w-3 h-3 rounded-full bg-red-500';
-                connectionText.textContent = 'Connection: Poor';
-                connectionText.className = 'text-red-400';
-                showTimeoutError();
-                return 1000;
+                text.className = 'text-red-400';
+                text.textContent = 'Connection Poor';
             }
+
+            return true;
         }
 
-        function getProgressBarColor(progress) {
-            if (progress >= 70) return 'bg-green-600';
-            if (progress >= 30) return 'bg-yellow-600';
-            return 'bg-blue-600';
+        function updateProgress(progress) {
+            const stage = setupStages.find(stage => progress <= stage.progress) || setupStages[setupStages.length - 1];
+            const progressBar = document.getElementById('progressBar');
+            const setupStatus = document.getElementById('setupStatus');
+            const percentage = document.getElementById('progressPercentage');
+
+            progressBar.style.width = `${progress}%`;
+            progressBar.style.backgroundColor = stage.color;
+            setupStatus.textContent = stage.message;
+            percentage.textContent = `${Math.min(progress, 100)}%`;
         }
 
-        function showTimeoutError() {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.classList.remove('hidden');
-            let countdown = 5;
+        function checkSetupTimeout() {
+            const elapsed = Date.now() - setupStartTime;
+            if (elapsed > MAX_SETUP_TIME) {
+                const errorMessage = connectionQuality === 'poor' ? 
+                    'Your internet connection is too slow' : 
+                    'Internal server error detected';
 
-            errorDiv.innerHTML = `
-                <div class="bg-red-500/20 text-red-400 p-6 rounded-lg text-center">
-                    <p class="text-xl font-bold mb-4">Poor Internet Connection</p>
-                    <p class="mb-4">Your connection appears to be unstable. Redirecting to login page...</p>
-                    <p id="countdown">Redirecting in ${countdown} seconds</p>
-                </div>
-            `;
+                document.getElementById('statusText').innerHTML = `
+                    <div class="text-red-400">
+                        ${errorMessage}<br>
+                        Redirecting to login in <span id="countdown">5</span> seconds...
+                    </div>
+                `;
 
-            const timer = setInterval(() => {
-                countdown--;
-                document.getElementById('countdown').textContent = `Redirecting in ${countdown} seconds`;
-                if (countdown <= 0) {
-                    clearInterval(timer);
-                    window.location.href = '/login';
-                }
-            }, 1000);
+                let count = 5;
+                const countdown = setInterval(() => {
+                    count--;
+                    document.getElementById('countdown').textContent = count;
+                    if (count <= 0) {
+                        clearInterval(countdown);
+                        window.location.href = '/login';
+                    }
+                }, 1000);
+
+                return true;
+            }
+            return false;
         }
 
-        async function updateProgress() {
-            const setupStart = Date.now();
-            let currentProgress = 0;
-
-            while (currentProgress < 100) {
-                // Check if total setup time exceeds MAX_LOAD_TIME
-                if (Date.now() - setupStart > MAX_LOAD_TIME) {
-                    showTimeoutError();
-                    return;
+        async function simulateSetup() {
+            try {
+                // Initial connection check
+                const latency = await checkConnection();
+                if (latency === -1) {
+                    throw new Error('Connection check failed');
                 }
 
-                const connectionSpeed = await checkConnection();
-                if (!connectionSpeed) return;
+                // Dynamic progress update based on connection quality
+                const progressInterval = setInterval(async () => {
+                    if (checkSetupTimeout()) {
+                        clearInterval(progressInterval);
+                        return;
+                    }
 
-                // Calculate increment based on connection speed
-                const speedFactor = Math.min(100 / connectionSpeed, 1);
-                const increment = Math.floor((Math.random() * 20 + 10) * speedFactor);
-                currentProgress = Math.min(currentProgress + increment, 100);
+                    // Increase progress based on connection quality
+                    progress += progressIncrement * (connectionQuality === 'good' ? 1.5 : 
+                               connectionQuality === 'medium' ? 1 : 0.5);
+                    
+                    // Update UI
+                    updateProgress(Math.min(progress, 100));
 
-                // Update UI
-                const progressBar = document.getElementById('progressBar');
-                progressBar.style.width = `${currentProgress}%`;
-                progressBar.className = `shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500 ${getProgressBarColor(currentProgress)}`;
-                document.getElementById('progressText').textContent = `${currentProgress}%`;
+                    // Check connection every 20% progress or if connection is poor
+                    if (progress % 20 <= progressIncrement || connectionQuality === 'poor') {
+                        await checkConnection();
+                    }
 
-                // Super fast progress for fast connections
-                if (connectionSpeed < 100) {
-                    await new Promise(resolve => setTimeout(resolve, 50));
-                } else {
-                    await new Promise(resolve => setTimeout(resolve, connectionSpeed));
-                }
+                    // When complete
+                    if (progress >= 100) {
+                        clearInterval(progressInterval);
+                        document.getElementById('statusText').textContent = 'Setup complete!';
+                        setTimeout(() => {
+                            window.location.replace(finalRedirect);
+                        }, 500);
+                    }
+                }, connectionQuality === 'good' ? 50 : connectionQuality === 'medium' ? 75 : 100);
 
-                if (currentProgress >= 100) {
-                    window.location.href = '<%= redirectUrl %>';
-                    break;
-                }
+            } catch (error) {
+                console.error('Setup error:', error);
+                checkSetupTimeout();
             }
         }
 
         // Start setup when page loads
-        window.addEventListener('load', updateProgress);
-
-        // Add error boundary
-        window.addEventListener('error', () => {
-            showTimeoutError();
+        document.addEventListener('DOMContentLoaded', () => {
+            simulateSetup();
         });
     </script>
 </body>

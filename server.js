@@ -1,14 +1,3 @@
-// Add at the beginning of the file
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-});
-
-process.on('uncaughtException', (error) => {
-    console.error('Uncaught Exception:', error);
-    // Prevent the app from crashing silently
-    process.exit(1);
-});
-
 require('dotenv').config(); // Add this line to load .env variables
 const express = require('express');
 const mongoose = require('mongoose');
@@ -16,7 +5,8 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 const path = require('path');
 const methodOverride = require('method-override');
-const MongoStore = require('connect-mongo');
+const requestIp = require('request-ip'); // Add this line
+const { MaintenanceMode } = require('./models'); // Add this import
 
 const app = express();
 
@@ -24,33 +14,35 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
-app.use(bodyParser.json());
+app.use(bodyParser.json()); // Add this line as backup
 app.use(bodyParser.urlencoded({ extended: true }));
-
-// Use absolute paths
 app.use(express.static(path.join(__dirname, 'public')));
-app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-
-// Update model imports
-const models = require(path.join(__dirname, 'models'));
-const { Request, User } = models;
 
 const maintenanceCheck = require('./middleware/maintenance');
 const responseHelper = require('./middleware/responseHelper');
 
-// Add middleware (ensure they are functions)
-app.use(responseHelper); // This middleware is now properly exported as a function
+// Add response helpers (single instance)
+app.use(responseHelper);
+
+// Add maintenance check middleware
 app.use(maintenanceCheck);
 
-// Session setup with MongoDB store
+// Add maintenance auto-stop check interval
+const MAINTENANCE_CHECK_INTERVAL = 30000; // 30 seconds
+setInterval(async () => {
+    try {
+        await MaintenanceMode.checkAndStopExpired();
+    } catch (error) {
+        console.error('Maintenance auto-stop check error:', error);
+    }
+}, MAINTENANCE_CHECK_INTERVAL);
+
+// Session setup
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'your_secret_key',
+    secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI
-    }),
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
@@ -58,15 +50,14 @@ app.use(session({
 }));
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI, {
+mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
-}).then(() => {
-    console.log('Connected to MongoDB');
-}).catch(err => {
-    console.error('MongoDB connection error:', err);
-    process.exit(1); // Exit if cannot connect to database
-});
+}).then(() => console.log('MongoDB connected'))
+  .catch(err => console.log(err));
+
+// MongoDB models
+const Request = require('./models/Request'); // Model for Moderator requests
 
 // Authentication middleware
 function isAuthenticated(req, res, next) {
@@ -85,6 +76,14 @@ function isModerator(req, res, next) {
     res.status(403).send('Access denied');
 }
 
+// Setup workspace route - Move this before other routes
+app.get('/admin/setup-workspace', isAuthenticated, (req, res) => {
+    if (!req.session.user || !['Admin', 'Moderator'].includes(req.session.user.role)) {
+        return res.redirect('/login');
+    }
+    res.render('setup-workspace', { user: req.session.user });
+});
+
 // Public routes (Login and Register)
 app.get('/login', (req, res) => res.render('login'));
 app.post('/login', async (req, res) => {
@@ -99,6 +98,7 @@ app.post('/login', async (req, res) => {
             });
         }
 
+        const User = require('./models/User');
         const user = await User.findOne({ username });
 
         if (!user || user.password !== password) {
@@ -132,6 +132,7 @@ app.post('/login', async (req, res) => {
 app.get('/register', (req, res) => res.render('register')); // Ensure this route is accessible
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
+    const User = require('./models/User');
     try {
         // Check if user already exists
         const existingUser = await User.findOne({ username });
@@ -153,6 +154,9 @@ app.post('/register', async (req, res) => {
     }
 });
 
+// Add requestIp middleware before your routes
+app.use(requestIp.mw());
+
 // Routes setup
 app.use('/', require('./routes/public'));
 app.use('/auth', require('./routes/auth'));
@@ -167,7 +171,10 @@ app.get('/setup-workspace', isAuthenticated, (req, res) => {
     }
     
     const redirectUrl = req.session.user.role === 'Admin' ? '/admin/dashboard' : '/moderator/dashboard';
-    res.render('setup-workspace', { redirectUrl });
+    res.render('setup-workspace', { 
+        user: req.session.user,  // Pass user data to template
+        redirectUrl 
+    });
 });
 
 // Logout route
@@ -226,17 +233,6 @@ app.post('/admin/requests/:id/reject', isAuthenticated, isAdmin, async (req, res
     } catch (err) {
         res.status(500).send('Error rejecting request');
     }
-});
-
-// Error handling
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
-});
-
-// 404 handler
-app.use((req, res) => {
-    res.status(404).render('404', { user: req.session.user || null });
 });
 
 // Start server

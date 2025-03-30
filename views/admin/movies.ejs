@@ -38,12 +38,17 @@
                                class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded">
                                 Edit
                             </a>
-                            <button onclick="handleEditRequest(this)" 
-                                    data-movie='<%= safeStringify(movie) %>'
-                                    data-id="<%= movie._id %>"
-                                    class="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded">
-                                Request Edit
-                            </button>
+                            
+                            <% if (user.role !== 'Admin') { %>
+                                <!-- Only show request edit button for non-admin users -->
+                                <button onclick="handleEditRequest(this)" 
+                                        data-movie='<%= safeStringify(movie) %>'
+                                        data-id="<%= movie._id %>"
+                                        class="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded">
+                                    Request Edit
+                                </button>
+                            <% } %>
+
                             <% if (user.role === 'Admin') { %>
                                 <form action="/admin/movies/<%= movie._id %>?_method=DELETE" method="POST" class="inline">
                                     <button type="submit" 

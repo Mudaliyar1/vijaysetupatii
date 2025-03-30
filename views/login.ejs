@@ -50,7 +50,7 @@
                 </div>
             <% } %>
 
-            <form action="/auth/login" method="POST" class="space-y-6">
+            <form id="loginForm" action="/auth/login" method="POST" class="space-y-6">
                 <% if (typeof error !== 'undefined') { %>
                     <div class="bg-red-500/20 text-red-400 p-4 rounded-lg">
                         <%= error %>
@@ -117,11 +117,28 @@
             menu.classList.remove('active');
         });
 
+        async function checkMaintenanceStatus() {
+            try {
+                const response = await fetch('/auth/maintenance/status');
+                const data = await response.json();
+                if (!data.inMaintenance && window.location.pathname === '/maintenance') {
+                    window.location.href = '/';
+                }
+                return data.inMaintenance;
+            } catch (error) {
+                console.error('Error checking maintenance:', error);
+                return false;
+            }
+        }
+
+        // Check maintenance status periodically
+        setInterval(checkMaintenanceStatus, 30000); // Check every 30 seconds
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const formData = new FormData(e.target);
-
+            
             try {
+                const formData = new FormData(e.target);
                 const response = await fetch('/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -133,35 +150,57 @@
                 if (data.success) {
                     window.location.href = data.redirectUrl;
                 } else if (data.maintenance) {
-                    // Show maintenance error message
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'bg-red-500/20 text-red-400 p-4 rounded-lg mb-4';
-                    errorDiv.innerHTML = `
-                        <p class="mb-2">${data.message}</p>
-                        <p>Redirecting to maintenance page in <span id="countdown">5</span> seconds...</p>
-                    `;
-                    
-                    const form = document.getElementById('loginForm');
-                    form.insertBefore(errorDiv, form.firstChild);
-
-                    // Countdown and redirect
-                    let count = 5;
-                    const interval = setInterval(() => {
-                        count--;
-                        document.getElementById('countdown').textContent = count;
-                        if (count <= 0) {
-                            clearInterval(interval);
-                            window.location.href = data.redirectUrl;
-                        }
-                    }, 1000);
+                    showMaintenanceError(data);
                 } else {
                     throw new Error(data.error || 'Login failed');
                 }
             } catch (error) {
-                // Show error message
-                alert(error.message);
+                showError(error.message);
             }
         });
+
+        function showMaintenanceError(data) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'bg-red-500/20 text-red-400 p-4 rounded-lg mb-4';
+            errorDiv.innerHTML = `
+                <p class="font-bold mb-2">Access Denied - System Under Maintenance</p>
+                <p class="mb-2">${data.error}</p>
+                <p class="countdown">Redirecting to maintenance page in <span id="countdown">${data.countdown}</span> seconds...</p>
+            `;
+            
+            const form = document.getElementById('loginForm');
+            const existingError = form.querySelector('.bg-red-500\\/20');
+            if (existingError) {
+                existingError.remove();
+            }
+            form.insertBefore(errorDiv, form.firstChild);
+
+            let count = data.countdown;
+            const countdownElement = document.getElementById('countdown');
+            const interval = setInterval(() => {
+                count--;
+                if (countdownElement) {
+                    countdownElement.textContent = count;
+                }
+                if (count <= 0) {
+                    clearInterval(interval);
+                    window.location.href = data.redirectUrl;
+                }
+            }, 1000);
+        }
+
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'bg-red-500/20 text-red-400 p-4 rounded-lg mb-4';
+            errorDiv.textContent = message;
+            
+            const form = document.getElementById('loginForm');
+            const existingError = form.querySelector('.bg-red-500\\/20');
+            if (existingError) {
+                existingError.remove();
+            }
+            form.insertBefore(errorDiv, form.firstChild);
+        }
     </script>
 </body>
 </html>

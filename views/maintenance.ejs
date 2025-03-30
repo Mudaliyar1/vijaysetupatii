@@ -24,7 +24,34 @@
                 <h1 class="text-4xl md:text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-600">
                     Under Maintenance
                 </h1>
-                <p class="text-xl text-gray-300 mb-6"><%= maintenance.message %></p>
+
+                <!-- Maintenance Reason and Details -->
+                <div class="bg-gray-800/50 backdrop-blur-md p-6 rounded-lg mb-8">
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-300">Reason:</h3>
+                            <p class="text-xl text-yellow-400"><%= maintenance.reason %></p>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-300">Details:</h3>
+                            <p class="text-xl text-blue-400"><%= maintenance.message %></p>
+                        </div>
+                        <div class="text-sm text-gray-400">
+                            <p>Started: <%= new Date(maintenance.startTime).toLocaleString() %></p>
+                            <p>Expected Duration: <%= maintenance.formatDuration() %></p>
+                            <% if (maintenance.endTime) { %>
+                                <p>Ended: <%= new Date(maintenance.endTime).toLocaleString() %></p>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Login Button -->
+                <div class="flex justify-center mb-6">
+                    <a href="/login" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg">
+                        Admin Login
+                    </a>
+                </div>
 
                 <!-- Countdown Timer -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-lg mx-auto mb-8">
@@ -47,85 +74,131 @@
                 </div>
 
                 <!-- Login Message -->
-                <div class="bg-gray-700/50 backdrop-blur-md rounded-lg p-6 mb-6">
-                    <% if (!user) { %>
-                        <p class="text-gray-300 mb-4">Only administrators can access during maintenance.</p>
-                        <a href="/login" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+                <div class="bg-gray-800/50 backdrop-blur-md p-6 rounded-lg mt-8">
+                    <div class="flex justify-center">
+                        <a href="/login" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg">
                             Administrator Login
                         </a>
-                    <% } else if (user.role !== 'Admin') { %>
-                        <p class="text-red-400 mb-4">Your account doesn't have access during maintenance.</p>
-                        <a href="/logout" class="inline-block bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors">
-                            Logout
-                        </a>
-                    <% } %>
-                </div>
-
-                <!-- Maintenance Details -->
-                <div class="text-sm text-gray-400">
-                    <p>Started: <%= new Date(maintenance.startTime).toLocaleString() %></p>
-                    <p>Expected Duration: <%= maintenance.estimatedDuration %></p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        function calculateEndTime(startTime, duration) {
-            const start = new Date(startTime);
-            // Parse duration string format (e.g., "2 hours", "30 minutes", "1 day")
-            const match = duration.match(/^(\d+)\s*(second|minute|hour|day|month)s?$/i);
-            if (!match) return start; // Return start time if format is invalid
+        let endTime;
 
-            const [_, value, unit] = match;
+        function initializeCountdown() {
+            const startTime = new Date("<%= maintenance.startTime %>");
+            const duration = parseInt("<%= maintenance.duration %>");
+            const durationUnit = "<%= maintenance.durationUnit %>";
+            
             const multipliers = {
-                second: 1000,
-                minute: 60 * 1000,
-                hour: 60 * 60 * 1000,
-                day: 24 * 60 * 60 * 1000,
-                month: 30 * 24 * 60 * 60 * 1000
+                minutes: 60 * 1000,
+                hours: 60 * 60 * 1000,
+                days: 24 * 60 * 60 * 1000
             };
 
-            return new Date(start.getTime() + (parseInt(value) * multipliers[unit.toLowerCase()]));
+            const durationMs = duration * (multipliers[durationUnit] || multipliers.hours);
+            endTime = new Date(startTime.getTime() + durationMs);
+
+            // Store end time in localStorage
+            localStorage.setItem('maintenanceEndTime', endTime.getTime());
+            localStorage.setItem('maintenanceId', '<%= maintenance._id %>');
         }
 
         function updateCountdown() {
-            const startTime = new Date("<%= maintenance.startTime %>");
-            const duration = "<%= maintenance.estimatedDuration %>";
-            const endTime = calculateEndTime(startTime, duration);
-            const now = new Date();
+            try {
+                // Get stored end time or initialize if not exists
+                if (!endTime) {
+                    const storedEndTime = localStorage.getItem('maintenanceEndTime');
+                    const storedMaintenanceId = localStorage.getItem('maintenanceId');
+                    
+                    // If maintenance ID changed, reinitialize
+                    if (storedMaintenanceId !== '<%= maintenance._id %>') {
+                        initializeCountdown();
+                    } else if (storedEndTime) {
+                        endTime = new Date(parseInt(storedEndTime));
+                    } else {
+                        initializeCountdown();
+                    }
+                }
 
-            if (!startTime || !endTime) {
-                console.error('Invalid start time or duration');
-                return;
+                const now = new Date();
+                const remaining = endTime - now;
+
+                if (remaining <= 0) {
+                    document.getElementById('countdown').innerHTML = 
+                        '<span class="text-green-400">Maintenance should be complete. Please try refreshing.</span>';
+                    return false;
+                }
+
+                const hours = Math.floor(remaining / (1000 * 60 * 60));
+                const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+                const milliseconds = Math.floor((remaining % 1000) / 10);
+
+                document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+                document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+                document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
+                document.getElementById('milliseconds').textContent = milliseconds.toString().padStart(2, '0');
+
+                return true;
+            } catch (error) {
+                console.error('Error updating countdown:', error);
+                return false;
             }
-
-            const diff = Math.max(0, endTime - now);
-            const hours = Math.floor(diff / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-            const milliseconds = Math.floor((diff % 1000) / 10);
-
-            document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
-            document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
-            document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
-            document.getElementById('milliseconds').textContent = milliseconds.toString().padStart(2, '0');
-
-            return diff > 0;
         }
 
-        // Update every 10ms for smooth countdown
+        // Add automatic refresh check
+        async function checkMaintenanceStatus() {
+            try {
+                const response = await fetch('/auth/maintenance/status');
+                const data = await response.json();
+                
+                if (!data.inMaintenance) {
+                    window.location.href = '/';
+                }
+                return data.inMaintenance;
+            } catch (error) {
+                console.error('Error checking maintenance:', error);
+                return true;
+            }
+        }
+
+        // Check maintenance status periodically
+        setInterval(checkMaintenanceStatus, 30000); // Check every 30 seconds
+
+        // Initialize countdown on page load
+        initializeCountdown();
+
+        // Update countdown every 10ms
         const timer = setInterval(() => {
             const stillCounting = updateCountdown();
             if (!stillCounting) {
                 clearInterval(timer);
-                // Optionally refresh the page when maintenance is complete
-                window.location.reload();
+                checkMaintenanceStatus(); // Check status when countdown ends
             }
         }, 10);
 
-        // Initial call
-        updateCountdown();
+        async function disableMaintenance() {
+            if (!confirm('Are you sure you want to disable maintenance mode?')) return;
+            
+            try {
+                const response = await fetch('/admin/maintenance/stop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    window.location.href = '/admin/maintenance';
+                } else {
+                    alert('Failed to disable maintenance mode');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
     </script>
 </body>
 </html>

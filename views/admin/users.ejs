@@ -9,6 +9,7 @@
 <body class="bg-gray-900 text-white">
     <%- include('../partials/admin-header', { title: 'User Management', user: user }) %>
     <main class="p-6">
+        <!-- User Management Header -->
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-3xl font-semibold">User Management</h2>
             <button onclick="openAddUserModal()" 
@@ -18,6 +19,42 @@
                 </svg>
                 Add New User
             </button>
+        </div>
+
+        <!-- Advanced Search Filters -->
+        <div class="bg-gray-800 p-6 rounded-lg mb-6">
+            <form id="usersFilterForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Search Username</label>
+                    <input type="text" name="search" 
+                           placeholder="Username..."
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Role Filter</label>
+                    <select name="role" class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                        <option value="">All Roles</option>
+                        <option value="Admin">Admin Only</option>
+                        <option value="Moderator">Moderator Only</option>
+                        <option value="User">User Only</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Records Per Page</label>
+                    <select name="limit" class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                        <option value="10">10 Records</option>
+                        <option value="25">25 Records</option>
+                        <option value="50">50 Records</option>
+                        <option value="100">100 Records</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" 
+                            class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">
+                        Search Users
+                    </button>
+                </div>
+            </form>
         </div>
 
         <!-- User List Table -->
@@ -32,7 +69,7 @@
                         <th class="p-4">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-700">
+                <tbody class="divide-y divide-gray-700" id="userTableBody">
                     <% users.forEach(user => { %>
                         <tr class="hover:bg-gray-700/50">
                             <td class="p-4">
@@ -52,7 +89,7 @@
                                 </span>
                             </td>
                             <td class="p-4 text-gray-400">
-                                <%= new Date(user.createdAt).toLocaleDateString() %>
+                                <%= new Date(user.createdAt).toLocaleString() %>
                             </td>
                             <td class="p-4">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
@@ -79,30 +116,54 @@
             </table>
         </div>
 
-        <!-- Add User Modal -->
+        <!-- Pagination -->
+        <div class="mt-4 flex justify-between items-center">
+            <div class="text-sm text-gray-400">
+                Showing <span id="startRecord">1</span> - <span id="endRecord">10</span> of <span id="totalRecords"><%= users.length %></span> records
+            </div>
+            <div class="space-x-2">
+                <button onclick="previousPage()" class="px-4 py-2 bg-gray-700 rounded-lg">Previous</button>
+                <button onclick="nextPage()" class="px-4 py-2 bg-gray-700 rounded-lg">Next</button>
+            </div>
+        </div>
+
+        <!-- Enhanced Add User Modal -->
         <div id="addUserModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
             <div class="bg-gray-800 rounded-lg w-96 mx-auto mt-20 p-6">
                 <h3 class="text-xl font-bold mb-4">Add New User</h3>
-                <form action="/admin/users/add" method="POST">
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Username</label>
-                            <input type="text" name="username" required
-                                   class="w-full px-3 py-2 bg-gray-700 rounded-lg">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Password</label>
-                            <input type="password" name="password" required
-                                   class="w-full px-3 py-2 bg-gray-700 rounded-lg">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Role</label>
-                            <select name="role" class="w-full px-3 py-2 bg-gray-700 rounded-lg">
-                                <option value="User">User</option>
-                                <option value="Moderator">Moderator</option>
-                                <option value="Admin">Admin</option>
-                            </select>
-                        </div>
+                <form action="/admin/users/add" method="POST" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Username</label>
+                        <input type="text" name="username" required minlength="3"
+                               class="w-full px-3 py-2 bg-gray-700 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Password</label>
+                        <input type="password" name="password" required minlength="6"
+                               class="w-full px-3 py-2 bg-gray-700 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Role</label>
+                        <select name="role" required class="w-full px-3 py-2 bg-gray-700 rounded-lg">
+                            <option value="User">User</option>
+                            <option value="Moderator">Moderator</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Email (Optional)</label>
+                        <input type="email" name="email" 
+                               class="w-full px-3 py-2 bg-gray-700 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Profile Picture URL (Optional)</label>
+                        <input type="url" name="avatar"
+                               class="w-full px-3 py-2 bg-gray-700 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Bio (Optional)</label>
+                        <textarea name="bio" rows="3"
+                                  class="w-full px-3 py-2 bg-gray-700 rounded-lg"></textarea>
                     </div>
                     <div class="mt-6 flex justify-end space-x-3">
                         <button type="button" onclick="closeAddUserModal()"
@@ -186,6 +247,111 @@
 
         function closeEditUserModal() {
             document.getElementById('editUserModal').classList.add('hidden');
+        }
+
+        let currentPage = 1;
+
+        document.getElementById('usersFilterForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const params = new URLSearchParams(formData);
+            await applyUserFilters(params);
+        });
+
+        async function applyUserFilters(params) {
+            try {
+                const response = await fetch(`/admin/users/filter?${params.toString()}`);
+                if (!response.ok) throw new Error('Filter request failed');
+                
+                const data = await response.json();
+                if (data.success) {
+                    updateUserTable(data.users);
+                    updatePagination(data.pagination);
+                }
+            } catch (error) {
+                console.error('Filter error:', error);
+            }
+        }
+
+        function updateUserTable(users) {
+            const tbody = document.getElementById('userTableBody');
+            
+            if (!users || users.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="p-4 text-center text-gray-400">
+                            No users found matching the criteria
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = users.map(user => `
+                <tr class="hover:bg-gray-700/50">
+                    <td class="p-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                ${user.username.charAt(0).toUpperCase()}
+                            </div>
+                            <span>${user.username}</span>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <span class="px-3 py-1 rounded-full text-sm ${
+                            user.role === 'Admin' ? 'bg-red-500/20 text-red-400' :
+                            user.role === 'Moderator' ? 'bg-yellow-500/20 text-yellow-400' :
+                            'bg-blue-500/20 text-blue-400'
+                        }">${user.role}</span>
+                    </td>
+                    <td class="p-4 text-gray-400">${user.createdAt}</td>
+                    <td class="p-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
+                            Active
+                        </span>
+                    </td>
+                    <td class="p-4">
+                        <div class="flex space-x-2">
+                            <button onclick="openEditUserModal('${user._id}', '${user.username}', '${user.role}')"
+                                    class="text-yellow-400 hover:text-yellow-300">
+                                Edit
+                            </button>
+                            ${user.role !== 'Admin' ? `
+                                <button onclick="deleteUser('${user._id}')"
+                                        class="text-red-400 hover:text-red-300">
+                                    Delete
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updatePagination(pagination) {
+            document.getElementById('startRecord').textContent = pagination.start;
+            document.getElementById('endRecord').textContent = pagination.end;
+            document.getElementById('totalRecords').textContent = pagination.total;
+            
+            document.querySelector('button[onclick="previousPage()"]').disabled = pagination.current === 1;
+            document.querySelector('button[onclick="nextPage()"]').disabled = 
+                pagination.current >= Math.ceil(pagination.total / parseInt(document.getElementById('recordsPerPage').value));
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                applyUserFilters();
+            }
+        }
+
+        function nextPage() {
+            const total = parseInt(document.getElementById('totalRecords').textContent);
+            const limit = parseInt(document.getElementById('recordsPerPage').value);
+            if (currentPage * limit < total) {
+                currentPage++;
+                applyUserFilters();
+            }
         }
     </script>
     <style>

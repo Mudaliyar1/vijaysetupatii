@@ -3,248 +3,561 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maintenance Management - Admin</title>
+    <title>Maintenance Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 text-white">
     <%- include('../partials/admin-header', { title: 'Maintenance Management', user: user }) %>
 
     <main class="container mx-auto px-4 py-8">
-        <!-- Add Maintenance Button -->
-        <div class="flex justify-between items-center mb-8">
-            <h2 class="text-2xl font-bold">Maintenance Management</h2>
-            <button onclick="openMaintenanceModal()" 
-                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                Enable Maintenance Mode
-            </button>
-        </div>
-
-        <!-- Add Maintenance Modal -->
-        <div id="maintenanceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
-            <div class="bg-gray-800 rounded-lg w-11/12 md:w-2/3 lg:w-1/2 mx-auto mt-20 p-6">
-                <div class="flex justify-between items-start mb-4">
-                    <h3 class="text-xl font-bold">Enable Maintenance Mode</h3>
-                    <button onclick="closeMaintenanceModal()" class="text-gray-400 hover:text-white">&times;</button>
+        <!-- Current Status -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Maintenance Status</h2>
+                <div class="space-x-4">
+                    <% if (maintenance?.isEnabled) { %>
+                        <button onclick="stopMaintenance()" 
+                                class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700">
+                            Stop Maintenance
+                        </button>
+                    <% } else { %>
+                        <button onclick="enableMaintenance()" 
+                                class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700">
+                            Enable Maintenance
+                        </button>
+                    <% } %>
                 </div>
-                <form action="/admin/maintenance/enable" method="POST" class="space-y-4">
+            </div>
+
+            <% if (typeof error !== 'undefined') { %>
+                <div class="bg-red-500/20 text-red-400 p-4 rounded-lg mb-4">
+                    <%= error %>
+                </div>
+            <% } %>
+
+            <!-- Maintenance Form -->
+            <form id="maintenanceForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Message</label>
+                    <input type="text" name="message" value="<%= maintenance?.message || 'Site is under maintenance' %>"
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Reason</label>
+                    <input type="text" name="reason" value="<%= maintenance?.reason || 'Scheduled maintenance' %>"
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium mb-2">Message</label>
-                        <input type="text" name="message" required 
-                               placeholder="Maintenance message..."
+                        <label class="block text-sm font-medium mb-2">Duration</label>
+                        <input type="number" id="durationValue" name="duration" min="1" value="<%= maintenance?.duration || 1 %>"
                                class="w-full px-4 py-2 bg-gray-700 rounded-lg">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-2">Reason</label>
-                        <textarea name="reason" required rows="3"
-                                placeholder="Reason for maintenance..."
-                                class="w-full px-4 py-2 bg-gray-700 rounded-lg"></textarea>
+                        <label class="block text-sm font-medium mb-2">Unit</label>
+                        <select id="durationType" name="durationUnit" class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                            <option value="minutes">Minutes</option>
+                            <option value="hours" selected>Hours</option>
+                            <option value="days">Days</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+                    Update Settings
+                </button>
+            </form>
+        </div>
+
+        <!-- Enhanced Search and Filter Section -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-8">
+            <h3 class="text-xl font-bold mb-4">Advanced Search & Filters</h3>
+            <form id="maintenanceFilterForm" class="space-y-4">
+                <!-- Date Range -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Start Date</label>
+                        <input type="datetime-local" name="startDate" 
+                               class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">End Date</label>
+                        <input type="datetime-local" name="endDate" 
+                               class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                    </div>
+                </div>
+
+                <!-- Filters Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Status</label>
+                        <select name="status" class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                            <option value="all">All Status</option>
+                            <option value="enabled">Active</option>
+                            <option value="disabled">Completed</option>
+                            <option value="auto-disabled">Auto Disabled</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-2">Duration</label>
-                        <div class="flex gap-2">
-                            <input type="number" name="durationValue" required min="1"
-                                   class="w-24 px-4 py-2 bg-gray-700 rounded-lg">
-                            <select name="durationUnit" required class="bg-gray-700 rounded-lg px-4 py-2">
-                                <option value="minutes">Minutes</option>
-                                <option value="hours">Hours</option>
-                                <option value="days">Days</option>
-                            </select>
-                        </div>
+                        <select name="duration" class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                            <option value="all">All Durations</option>
+                            <option value="short">Short (< 1 hour)</option>
+                            <option value="medium">Medium (1-6 hours)</option>
+                            <option value="long">Long (> 6 hours)</option>
+                        </select>
                     </div>
-                    <div class="flex justify-end space-x-4">
-                        <button type="button" onclick="closeMaintenanceModal()" 
-                                class="px-4 py-2 bg-gray-700 rounded-lg">
-                            Cancel
-                        </button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700">
-                            Enable Maintenance
-                        </button>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Records Per Page</label>
+                        <select name="limit" class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                            <option value="10">10 Records</option>
+                            <option value="25">25 Records</option>
+                            <option value="50">50 Records</option>
+                            <option value="100">100 Records</option>
+                        </select>
                     </div>
-                </form>
-            </div>
-        </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Search Reason/Message</label>
+                        <input type="text" name="search" placeholder="Search..."
+                               class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                    </div>
+                </div>
 
-        <!-- Stats Section -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-gray-800 p-6 rounded-lg">
-                <h3 class="text-lg font-semibold text-gray-400">Total Maintenance</h3>
-                <p class="text-3xl font-bold"><%= stats.totalMaintenance %></p>
-            </div>
-            <div class="bg-gray-800 p-6 rounded-lg">
-                <h3 class="text-lg font-semibold text-gray-400">Auto-disabled</h3>
-                <p class="text-3xl font-bold text-yellow-400"><%= stats.autoDisabled %></p>
-            </div>
-            <div class="bg-gray-800 p-6 rounded-lg">
-                <h3 class="text-lg font-semibold text-gray-400">Total Visits</h3>
-                <p class="text-3xl font-bold text-blue-400"><%= stats.totalVisits %></p>
-            </div>
-            <div class="bg-gray-800 p-6 rounded-lg">
-                <h3 class="text-lg font-semibold text-gray-400">Login Attempts</h3>
-                <p class="text-3xl font-bold text-red-400"><%= stats.totalLogins %></p>
-            </div>
-        </div>
-
-        <!-- Search and Filters -->
-        <div class="bg-gray-800 p-6 rounded-lg mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label class="block text-sm mb-2">Date Range</label>
-                    <div class="flex gap-2">
-                        <input type="date" id="startDate" class="bg-gray-700 rounded px-3 py-2 w-full">
-                        <input type="date" id="endDate" class="bg-gray-700 rounded px-3 py-2 w-full">
-                    </div>
+                <!-- Search Button -->
+                <div class="flex justify-end">
+                    <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">
+                        Search Records
+                    </button>
                 </div>
-                <div>
-                    <label class="block text-sm mb-2">Status</label>
-                    <select id="statusFilter" class="bg-gray-700 rounded px-3 py-2 w-full">
-                        <option value="all">All</option>
-                        <option value="enabled">Enabled</option>
-                        <option value="disabled">Disabled</option>
-                        <option value="auto-disabled">Auto-disabled</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm mb-2">Duration</label>
-                    <select id="durationFilter" class="bg-gray-700 rounded px-3 py-2 w-full">
-                        <option value="all">All</option>
-                        <option value="short">< 1 hour</option>
-                        <option value="medium">1-6 hours</option>
-                        <option value="long">> 6 hours</option>
-                    </select>
-                </div>
-            </div>
+            </form>
         </div>
 
         <!-- Maintenance History -->
-        <div class="bg-gray-800 rounded-lg overflow-hidden">
+        <div class="bg-gray-800 rounded-lg p-6 mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Maintenance History</h3>
+                <div class="flex space-x-4">
+                    <button onclick="deleteSelectedRecords()" 
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg">
+                        Delete Selected
+                    </button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-700">
+                        <tr>
+                            <th class="p-4 text-left">
+                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                            </th>
+                            <th class="p-4 text-left">Start Time</th>
+                            <th class="p-4 text-left">Duration</th>
+                            <th class="p-4 text-left">Message</th>
+                            <th class="p-4 text-left">Reason</th>
+                            <th class="p-4 text-left">Status</th>
+                            <th class="p-4 text-left">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        <% maintenanceHistory.forEach(record => { %>
+                            <tr class="hover:bg-gray-700/50">
+                                <td class="p-4">
+                                    <input type="checkbox" class="record-checkbox" value="<%= record._id %>">
+                                </td>
+                                <td class="p-4">
+                                    <div class="space-y-1">
+                                        <div><%= new Date(record.startTime).toLocaleString('en-US', { 
+                                            year: 'numeric', 
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            second: '2-digit'
+                                        }) %></div>
+                                        <% if (record.endTime) { %>
+                                            <div class="text-sm text-gray-400">End: <%= new Date(record.endTime).toLocaleString('en-US', {
+                                                year: 'numeric',
+                                                month: '2-digit',
+                                                day: '2-digit',
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                                second: '2-digit'
+                                            }) %></div>
+                                        <% } %>
+                                    </div>
+                                </td>
+                                <td class="p-4">
+                                    <%= record.formatDuration() %>
+                                </td>
+                                <td class="p-4">
+                                    <div class="max-w-xs truncate" title="<%= record.message %>">
+                                        <%= record.message %>
+                                    </div>
+                                </td>
+                                <td class="p-4">
+                                    <div class="max-w-xs truncate" title="<%= record.reason %>">
+                                        <%= record.reason %>
+                                    </div>
+                                </td>
+                                <td class="p-4">
+                                    <span class="px-2 py-1 rounded-full text-xs
+                                        <%= record.isEnabled ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400' %>">
+                                        <%= record.isEnabled ? 'Active' : 'Inactive' %>
+                                    </span>
+                                </td>
+                                <td class="p-4">
+                                    <button onclick="deleteRecord('<%= record._id %>')"
+                                            class="text-red-400 hover:text-red-300">
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Login Attempts Section -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Login Attempts During Maintenance</h3>
+                <div class="space-x-4">
+                    <button onclick="deleteSelectedAttempts()" 
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg">
+                        Delete Selected
+                    </button>
+                    <button onclick="deleteAllAttempts()" 
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg">
+                        Delete All
+                    </button>
+                </div>
+            </div>
+
+            <!-- Login Attempts Filter Form -->
+            <form id="loginAttemptsFilterForm" class="mb-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Search Username</label>
+                    <input type="text" name="search" 
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg"
+                           placeholder="Search username...">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">IP Address</label>
+                    <input type="text" name="ip" 
+                           class="w-full px-4 py-2 bg-gray-700 rounded-lg"
+                           placeholder="Search IP...">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Status</label>
+                    <select name="status" class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                        <option value="all">All Status</option>
+                        <option value="success">Successful</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Records</label>
+                    <select name="limit" class="w-full px-4 py-2 bg-gray-700 rounded-lg">
+                        <option value="10">10 Records</option>
+                        <option value="25">25 Records</option>
+                        <option value="50">50 Records</option>
+                        <option value="100">100 Records</option>
+                    </select>
+                </div>
+                <div class="md:col-span-4 flex justify-end">
+                    <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">
+                        Search Attempts
+                    </button>
+                </div>
+            </form>
+
+            <!-- Update login attempts table with status column -->
             <table class="w-full">
                 <thead class="bg-gray-700">
                     <tr>
-                        <th class="px-6 py-3 text-left">Date</th>
-                        <th class="px-6 py-3 text-left">Duration</th>
-                        <th class="px-6 py-3 text-left">Reason</th>
-                        <th class="px-6 py-3 text-left">Status</th>
-                        <th class="px-6 py-3 text-left">Visits</th>
-                        <th class="px-6 py-3 text-left">Actions</th>
+                        <th class="p-4 text-left">
+                            <input type="checkbox" id="selectAllAttempts" onchange="toggleSelectAllAttempts()">
+                        </th>
+                        <th class="p-4 text-left">Username</th>
+                        <th class="p-4 text-left">Role</th>
+                        <th class="p-4 text-left">IP</th>
+                        <th class="p-4 text-left">Status</th>
+                        <th class="p-4 text-left">Timestamp</th>
+                        <th class="p-4 text-left">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-700">
-                    <% maintenanceHistory.forEach(maintenance => { %>
-                        <tr class="hover:bg-gray-700">
-                            <td class="px-6 py-4">
-                                <%= new Date(maintenance.startTime).toLocaleDateString() %>
-                            </td>
-                            <td class="px-6 py-4">
-                                <%= maintenance.estimatedDuration %>
-                            </td>
-                            <td class="px-6 py-4">
-                                <%= maintenance.reason %>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="px-2 py-1 rounded text-xs
-                                    <%= maintenance.isEnabled ? 'bg-green-500/20 text-green-400' :
-                                       maintenance.autoDisabled ? 'bg-yellow-500/20 text-yellow-400' :
-                                       'bg-red-500/20 text-red-400' %>">
-                                    <%= maintenance.isEnabled ? 'Active' :
-                                       maintenance.autoDisabled ? 'Auto-disabled' : 'Manual-disabled' %>
+                <tbody id="loginAttemptsBody">
+                    <!-- Content will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Visitor Statistics Section -->
+        <div class="bg-gray-800 rounded-lg p-6">
+            <h3 class="text-xl font-bold mb-4">Visitor Statistics</h3>
+            
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="text-sm text-gray-400">Total Visitors</h4>
+                    <p class="text-2xl font-bold" id="totalVisitors">0</p>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="text-sm text-gray-400">Unique IPs</h4>
+                    <p class="text-2xl font-bold" id="uniqueIPs">0</p>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="text-sm text-gray-400">Login Attempts</h4>
+                    <p class="text-2xl font-bold" id="totalAttempts">0</p>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="text-sm text-gray-400">Moderator Attempts</h4>
+                    <p class="text-2xl font-bold" id="moderatorAttempts">0</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let searchTimeout;
+        const debounceSearch = (value) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => applyFiltersLive(), 300);
+        };
+
+        async function applyFiltersLive() {
+            const formData = new FormData(document.getElementById('searchForm'));
+            const params = new URLSearchParams(formData);
+            
+            try {
+                const response = await fetch(`/admin/maintenance/filter?${params.toString()}`);
+                if (!response.ok) throw new Error('Filter request failed');
+                
+                const data = await response.json();
+                updateMaintenanceTable(data.records);
+                
+            } catch (error) {
+                console.error('Filter error:', error);
+            }
+        }
+
+        function updateMaintenanceTable(records) {
+            const tbody = document.querySelector('tbody');
+            tbody.innerHTML = records.map(record => `
+                <tr class="hover:bg-gray-700/50">
+                    <td class="p-4">
+                        <input type="checkbox" class="record-checkbox" value="${record._id}">
+                    </td>
+                    <td class="p-4">
+                        <div class="space-y-1">
+                            <div>${new Date(record.startTime).toLocaleString('en-US', { 
+                                year: 'numeric', 
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit'
+                            })}</div>
+                            ${record.endTime ? 
+                                `<div class="text-sm text-gray-400">End: ${new Date(record.endTime).toLocaleString('en-US', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit'
+                                })}</div>` 
+                                : '' 
+                            }
+                        </div>
+                    </td>
+                    <td class="p-4">${record.formatDuration()}</td>
+                    <td class="p-4">
+                        <div class="max-w-xs truncate" title="${record.message}">
+                            ${record.message}
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <div class="max-w-xs truncate" title="${record.reason}">
+                            ${record.reason}
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <span class="px-2 py-1 rounded-full text-xs ${
+                            record.isEnabled ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                        }">
+                            ${record.isEnabled ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                    <td class="p-4">
+                        <button onclick="deleteRecord('${record._id}')"
+                                class="text-red-400 hover:text-red-300">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function toggleMaintenance() {
+            try {
+                const response = await fetch('/admin/maintenance/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    throw new Error('Failed to toggle maintenance mode');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function stopMaintenance() {
+            if (!confirm('Are you sure you want to stop maintenance mode?')) return;
+            
+            try {
+                const response = await fetch('/admin/maintenance/stop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    throw new Error('Failed to stop maintenance mode');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function enableMaintenance() {
+            const form = document.getElementById('maintenanceForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch('/admin/maintenance/enable', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) throw new Error('Failed to enable maintenance');
+                
+                const result = await response.json();
+                if (result.success) {
+                    window.location.reload();
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        document.getElementById('maintenanceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch('/admin/maintenance/enable', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) throw new Error('Failed to enable maintenance');
+                
+                const result = await response.json();
+                if (result.success) {
+                    window.location.reload();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        async function loadLoginHistory() {
+            try {
+                const response = await fetch('/admin/maintenance/login-history');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const tbody = document.getElementById('loginAttemptsBody');
+                    tbody.innerHTML = data.history.map(attempt => `
+                        <tr class="hover:bg-gray-700/50">
+                            <td class="p-4">${attempt.username}</td>
+                            <td class="p-4">${attempt.role}</td>
+                            <td class="p-4">${attempt.ip}</td>
+                            <td class="p-4">${attempt.timestamp}</td>
+                            <td class="p-4">
+                                <span class="px-2 py-1 rounded-full text-xs ${
+                                    attempt.success ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                                }">
+                                    ${attempt.success ? 'Success' : 'Failed'}
                                 </span>
                             </td>
-                            <td class="px-6 py-4">
-                                <%= maintenance.visits %>
-                            </td>
-                            <td class="px-6 py-4">
-                                <button onclick="viewDetails('<%= maintenance._id %>')"
-                                        class="text-blue-400 hover:text-blue-300 mr-2">
-                                    View
-                                </button>
-                                <button onclick="deleteRecord('<%= maintenance._id %>')"
-                                        class="text-red-400 hover:text-red-300">
+                            <td class="p-4">
+                                <button onclick="deleteLoginAttempt('${attempt._id}')"
+                                        class="text-red-400 hover:text-red-300 mr-2">
                                     Delete
                                 </button>
                             </td>
                         </tr>
-                    <% }); %>
-                </tbody>
-            </table>
-        </div>
-    </main>
-
-    <!-- Details Modal -->
-    <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
-        <div class="bg-gray-800 rounded-lg w-11/12 md:w-3/4 lg:w-1/2 mx-auto mt-20 p-6">
-            <div class="flex justify-between items-start mb-4">
-                <h3 class="text-xl font-bold">Maintenance Details</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-white">&times;</button>
-            </div>
-            <div id="modalContent" class="space-y-4"></div>
-        </div>
-    </div>
-
-    <script>
-        // Add filter functionality
-        function applyFilters() {
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-            const status = document.getElementById('statusFilter').value;
-            const duration = document.getElementById('durationFilter').value;
-
-            window.location.href = `/admin/maintenance?startDate=${startDate}&endDate=${endDate}&status=${status}&duration=${duration}`;
-        }
-
-        // Add event listeners to filters
-        document.getElementById('startDate').addEventListener('change', applyFilters);
-        document.getElementById('endDate').addEventListener('change', applyFilters);
-        document.getElementById('statusFilter').addEventListener('change', applyFilters);
-        document.getElementById('durationFilter').addEventListener('change', applyFilters);
-
-        async function viewDetails(id) {
-            try {
-                const response = await fetch(`/admin/maintenance/${id}`);
-                const data = await response.json();
-                
-                document.getElementById('modalContent').innerHTML = `
-                    <div class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-gray-400">Started</label>
-                                <p>${new Date(data.startTime).toLocaleString()}</p>
-                            </div>
-                            <div>
-                                <label class="text-gray-400">Ended</label>
-                                <p>${data.endTime ? new Date(data.endTime).toLocaleString() : 'N/A'}</p>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="text-gray-400">Message</label>
-                            <p>${data.message}</p>
-                        </div>
-                        <div>
-                            <label class="text-gray-400">Statistics</label>
-                            <ul class="list-disc pl-5 mt-2">
-                                <li>Total Visits: ${data.visits}</li>
-                                <li>Login Attempts: ${data.loginAttempts}</li>
-                                <li>Duration: ${data.estimatedDuration}</li>
-                            </ul>
-                        </div>
-                    </div>
-                `;
-                
-                document.getElementById('detailsModal').classList.remove('hidden');
+                    `).join('');
+                }
             } catch (error) {
-                console.error('Error fetching maintenance details:', error);
+                console.error('Error loading login history:', error);
             }
         }
 
-        function closeModal() {
-            document.getElementById('detailsModal').classList.add('hidden');
+        async function deleteLoginAttempt(id) {
+            if (!confirm('Are you sure you want to delete this login attempt?')) return;
+            
+            try {
+                const response = await fetch(`/admin/maintenance/login-attempts/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    loadLoginHistory();
+                }
+            } catch (error) {
+                console.error('Error deleting login attempt:', error);
+            }
+        }
+
+        async function clearAllLoginHistory() {
+            if (!confirm('Are you sure you want to clear all login history?')) return;
+            
+            try {
+                const response = await fetch('/admin/maintenance/login-history/clear', {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    loadLoginHistory();
+                }
+            } catch (error) {
+                console.error('Error clearing history:', error);
+            }
+        }
+
+        function toggleSelectAll() {
+            const checkboxes = document.querySelectorAll('.record-checkbox');
+            const selectAll = document.getElementById('selectAll');
+            checkboxes.forEach(checkbox => checkbox.checked = selectAll.checked);
         }
 
         async function deleteRecord(id) {
-            if (!confirm('Are you sure you want to delete this maintenance record?')) return;
-
+            if (!confirm('Are you sure you want to delete this record?')) return;
+            
             try {
                 const response = await fetch(`/admin/maintenance/${id}`, {
                     method: 'DELETE'
@@ -256,17 +569,285 @@
                     throw new Error('Failed to delete record');
                 }
             } catch (error) {
-                console.error('Error deleting maintenance record:', error);
+                alert('Error: ' + error.message);
             }
         }
 
-        function openMaintenanceModal() {
-            document.getElementById('maintenanceModal').classList.remove('hidden');
+        async function deleteSelectedRecords() {
+            const selected = Array.from(document.querySelectorAll('.record-checkbox:checked'))
+                .map(checkbox => checkbox.value);
+                
+            if (!selected.length) {
+                alert('Please select records to delete');
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to delete ${selected.length} records?`)) return;
+            
+            try {
+                const response = await fetch('/admin/maintenance/bulk-delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: selected })
+                });
+                
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    throw new Error('Failed to delete records');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
         }
 
-        function closeMaintenanceModal() {
-            document.getElementById('maintenanceModal').classList.add('hidden');
+        function applyFilters() {
+            const formData = new FormData(document.getElementById('searchForm'));
+            const params = new URLSearchParams(formData);
+            window.location.href = `/admin/maintenance?${params.toString()}`;
         }
+
+        function resetFilters() {
+            document.getElementById('searchForm').reset();
+            window.location.href = '/admin/maintenance';
+        }
+
+        let loginSearchTimeout;
+        let ipSearchTimeout;
+
+        function debounceLoginSearch(value) {
+            clearTimeout(loginSearchTimeout);
+            loginSearchTimeout = setTimeout(() => fetchMaintenanceStats({ username: value }), 300);
+        }
+
+        function debounceIPSearch(value) {
+            clearTimeout(ipSearchTimeout);
+            ipSearchTimeout = setTimeout(() => fetchMaintenanceStats({ ip: value }), 300);
+        }
+
+        function filterLoginsByRole(role) {
+            fetchMaintenanceStats({ role });
+        }
+
+        async function fetchMaintenanceStats(filters = {}) {
+            try {
+                const params = new URLSearchParams(filters);
+                const response = await fetch(`/admin/maintenance/statistics?${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateMaintenanceStats(data);
+                }
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+            }
+        }
+
+        function updateMaintenanceStats(data) {
+            // Update stats
+            document.getElementById('totalVisitors').textContent = data.stats.totalVisitors;
+            document.getElementById('uniqueIPs').textContent = data.stats.uniqueIPs;
+            document.getElementById('totalAttempts').textContent = data.stats.totalAttempts;
+            document.getElementById('moderatorAttempts').textContent = data.stats.moderatorAttempts;
+
+            // Update login attempts table
+            const tbody = document.getElementById('loginAttemptsBody');
+            tbody.innerHTML = data.loginAttempts.map(attempt => `
+                <tr class="hover:bg-gray-700/50">
+                    <td class="p-4">${attempt.username}</td>
+                    <td class="p-4">${attempt.role}</td>
+                    <td class="p-4">${attempt.ip}</td>
+                    <td class="p-4">${attempt.attemptCount}</td>
+                    <td class="p-4">${new Date(attempt.lastAttempt).toLocaleString()}</td>
+                    <td class="p-4">
+                        <button onclick="deleteLoginHistory('${attempt.username}')"
+                                class="text-red-400 hover:text-red-300">Delete History</button>
+                        <button onclick="viewAttemptDetails('${attempt.username}')"
+                                class="text-blue-400 hover:text-blue-300 ml-2">View Details</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function updateLoginAttempts() {
+            const recordsPerPage = document.getElementById('loginRecordsPerPage').value;
+            const startDate = document.getElementById('loginStartDate').value;
+            const endDate = document.getElementById('loginEndDate').value;
+            
+            try {
+                const response = await fetch(`/admin/maintenance/statistics?page=${currentPage}&limit=${recordsPerPage}&startDate=${startDate}&endDate=${endDate}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const tbody = document.getElementById('loginAttemptsBody');
+                    tbody.innerHTML = data.loginAttempts.map(attempt => `
+                        <tr class="hover:bg-gray-700/50">
+                            <td class="p-4">${attempt.username}</td>
+                            <td class="p-4">${attempt.role}</td>
+                            <td class="p-4">${attempt.ip}</td>
+                            <td class="p-4">${attempt.attemptCount}</td>
+                            <td class="p-4">${new Date(attempt.lastAttempt).toLocaleString()}</td>
+                            <td class="p-4">
+                                <button onclick="deleteLoginHistory('${attempt.username}')"
+                                        class="text-red-400 hover:text-red-300">Delete History</button>
+                                <button onclick="viewAttemptDetails('${attempt.username}')"
+                                        class="text-blue-400 hover:text-blue-300 ml-2">View Details</button>
+                            </td>
+                        </tr>
+                    `).join('');
+
+                    // Update pagination info
+                    document.getElementById('startRecord').textContent = data.pagination.start;
+                    document.getElementById('endRecord').textContent = data.pagination.end;
+                    document.getElementById('totalRecords').textContent = data.pagination.total;
+                    
+                    // Update button states
+                    document.getElementById('prevPage').disabled = currentPage === 1;
+                    document.getElementById('nextPage').disabled = data.pagination.end >= data.pagination.total;
+                }
+            } catch (error) {
+                console.error('Error fetching login attempts:', error);
+            }
+        }
+
+        async function deleteLoginHistory(username) {
+            if (!confirm(`Delete entire login history for ${username}?`)) return;
+            
+            try {
+                const response = await fetch(`/admin/maintenance/login-history/${username}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    updateLoginAttempts();
+                }
+            } catch (error) {
+                console.error('Error deleting login history:', error);
+            }
+        }
+
+        async function fetchLoginAttempts(params) {
+            try {
+                const response = await fetch(`/admin/maintenance/login-attempts/filter?${params}`);
+                if (!response.ok) throw new Error('Failed to fetch login attempts');
+                
+                const data = await response.json();
+                if (data.success) {
+                    updateLoginAttemptsTable(data.attempts);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function updateLoginAttemptsTable(attempts) {
+            const tbody = document.getElementById('loginAttemptsBody');
+            tbody.innerHTML = attempts.map(attempt => `
+                <tr class="hover:bg-gray-700/50">
+                    <td class="p-4">
+                        <input type="checkbox" class="attempt-checkbox" value="${attempt._id}">
+                    </td>
+                    <td class="p-4">${attempt.username}</td>
+                    <td class="p-4">${attempt.role}</td>
+                    <td class="p-4">${attempt.ip}</td>
+                    <td class="p-4">
+                        <span class="px-2 py-1 rounded-full text-xs ${
+                            attempt.success ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                        }">
+                            ${attempt.success ? 'Success' : 'Failed'}
+                        </span>
+                    </td>
+                    <td class="p-4">${new Date(attempt.timestamp).toLocaleString()}</td>
+                    <td class="p-4">
+                        <button onclick="deleteAttempt('${attempt._id}')"
+                                class="text-red-400 hover:text-red-300">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function toggleSelectAllAttempts() {
+            const selectAll = document.getElementById('selectAllAttempts');
+            const checkboxes = document.querySelectorAll('.attempt-checkbox');
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        }
+
+        async function deleteSelectedAttempts() {
+            const selected = Array.from(document.querySelectorAll('.attempt-checkbox:checked'))
+                .map(cb => cb.value);
+                
+            if (!selected.length) {
+                alert('Please select attempts to delete');
+                return;
+            }
+            
+            if (!confirm(`Delete ${selected.length} selected attempts?`)) return;
+            
+            try {
+                const response = await fetch('/admin/maintenance/login-attempts/delete-selected', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: selected })
+                });
+                
+                if (response.ok) {
+                    await fetchLoginAttempts(new URLSearchParams());
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function deleteAllAttempts() {
+            if (!confirm('Are you sure you want to delete ALL login attempts?')) return;
+            
+            try {
+                const response = await fetch('/admin/maintenance/login-attempts/clear-all', {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    await fetchLoginAttempts(new URLSearchParams());
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        document.getElementById('loginAttemptsFilterForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const params = new URLSearchParams(formData);
+            await fetchLoginAttempts(params);
+        });
+
+        document.getElementById('maintenanceFilterForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const params = new URLSearchParams(formData);
+            await applyMaintenanceFilters(params);
+        });
+
+        async function applyMaintenanceFilters(params) {
+            try {
+                const response = await fetch(`/admin/maintenance/filter?${params}`);
+                if (!response.ok) throw new Error('Filter request failed');
+                
+                const data = await response.json();
+                if (data.success) {
+                    updateMaintenanceTable(data.records);
+                }
+            } catch (error) {
+                console.error('Filter error:', error);
+            }
+        }
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchLoginAttempts(new URLSearchParams());
+        });
     </script>
 </body>
 </html>
