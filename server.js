@@ -26,9 +26,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Use absolute paths
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+
+const models = require(path.join(__dirname, 'models'));
+const { Request, User } = models;
 
 const maintenanceCheck = require('./middleware/maintenance');
 const responseHelper = require('./middleware/responseHelper');
@@ -62,9 +67,6 @@ mongoose.connect(process.env.MONGODB_URI, {
     process.exit(1); // Exit if cannot connect to database
 });
 
-// MongoDB models
-const Request = require('./models/Request'); // Model for Moderator requests
-
 // Authentication middleware
 function isAuthenticated(req, res, next) {
     if (req.session.user) return next();
@@ -96,7 +98,6 @@ app.post('/login', async (req, res) => {
             });
         }
 
-        const User = require('./models/User');
         const user = await User.findOne({ username });
 
         if (!user || user.password !== password) {
@@ -130,7 +131,6 @@ app.post('/login', async (req, res) => {
 app.get('/register', (req, res) => res.render('register')); // Ensure this route is accessible
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
-    const User = require('./models/User');
     try {
         // Check if user already exists
         const existingUser = await User.findOne({ username });

@@ -2,8 +2,11 @@ services:
   - type: web
     name: vijaysetupatii
     env: node
-    buildCommand: npm install
-    startCommand: node server.js
+    buildCommand: |
+      mkdir -p src
+      cp -r models routes middleware utils views public server.js package.json src/
+      cd src && npm install
+    startCommand: cd src && node server.js
     envVars:
       - key: NODE_ENV
         value: production

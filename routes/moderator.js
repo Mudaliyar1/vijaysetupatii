@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const Movie = require('../models/Movie');
-const Award = require('../models/Award');
-const Request = require('../models/Request');
+const path = require('path');
+const models = require(path.join(__dirname, '..', 'models'));
+const { Movie, Award, Request } = models;
 const { isAuthenticated } = require('../middleware/auth');
 
 // Middleware to check if user is moderator

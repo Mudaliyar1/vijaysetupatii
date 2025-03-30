@@ -1,12 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const Movie = require('../models/Movie');
-const Award = require('../models/Award');
-const Message = require('../models/Message');
-const User = require('../models/User');
-const Post = require('../models/Post');
-const Notification = require('../models/Notification');
-const MaintenanceMode = require('../models/MaintenanceMode');
+const path = require('path');
+
+// Use absolute paths with __dirname
+const models = require(path.join(__dirname, '..', 'models'));
+const { Movie, Award, Message, User, Post, Notification, MaintenanceMode } = models;
+
 const { isAuthenticated, isUser } = require('../middleware/auth');
 const methodOverride = require('method-override');
 const mongoose = require('mongoose');

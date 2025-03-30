@@ -1,10 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const Movie = require('../models/Movie');
-const Award = require('../models/Award');
-const User = require('../models/User');
-const Request = require('../models/Request');
-const MaintenanceMode = require('../models/MaintenanceMode');
+const path = require('path');
+const models = require(path.join(__dirname, '..', 'models'));
+const { Movie, Award, User, Request, MaintenanceMode } = models;
 
 // Middleware to check if user is admin
 const isAdmin = (req, res, next) => {
