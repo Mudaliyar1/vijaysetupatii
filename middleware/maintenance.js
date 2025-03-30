@@ -9,20 +9,37 @@ const maintenanceCheck = async (req, res, next) => {
             return next();
         }
 
-        // For non-admin routes and users, check maintenance mode
-        const maintenance = await MaintenanceMode.findOne({ isEnabled: true });
-        
-        if (maintenance?.isEnabled) {
-            const allowedPaths = ['/login', '/maintenance', '/auth/login', '/setup-workspace'];
-            if (allowedPaths.includes(req.path)) {
-                return next();
-            }
-            return res.redirect('/maintenance');
+        // Define paths that should always be accessible
+        const allowedPaths = ['/login', '/maintenance', '/auth/login', '/setup-workspace', '/auth/ping'];
+        if (allowedPaths.includes(req.path)) {
+            return next();
         }
 
-        next();
+        // Add timeout to prevent long-running queries
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Maintenance check timed out')), 5000);
+        });
+
+        // For non-admin routes and users, check maintenance mode with timeout
+        const maintenancePromise = MaintenanceMode.findOne({ isEnabled: true }).exec();
+        
+        try {
+            // Race the database query against the timeout
+            const maintenance = await Promise.race([maintenancePromise, timeoutPromise]);
+            
+            if (maintenance?.isEnabled) {
+                return res.redirect('/maintenance');
+            }
+            
+            next();
+        } catch (timeoutError) {
+            console.error('Maintenance check timed out:', timeoutError.message);
+            // If timeout occurs, allow the request to proceed to avoid blocking users
+            next();
+        }
     } catch (error) {
         console.error('Maintenance check error:', error);
+        // In case of any error, allow the request to proceed
         next();
     }
 };

@@ -28,15 +28,38 @@ app.use(responseHelper);
 // Add maintenance check middleware
 app.use(maintenanceCheck);
 
-// Add maintenance auto-stop check interval
-const MAINTENANCE_CHECK_INTERVAL = 30000; // 30 seconds
-setInterval(async () => {
-    try {
-        await MaintenanceMode.checkAndStopExpired();
-    } catch (error) {
-        console.error('Maintenance auto-stop check error:', error);
+// Add maintenance auto-stop check interval with improved error handling
+const MAINTENANCE_CHECK_INTERVAL = 60000; // Increased to 60 seconds to reduce frequency
+let maintenanceCheckRunning = false; // Flag to prevent overlapping checks
+
+const performMaintenanceCheck = async () => {
+    // Skip if a check is already running or if MongoDB is not connected
+    if (maintenanceCheckRunning || mongoose.connection.readyState !== 1) {
+        return;
     }
-}, MAINTENANCE_CHECK_INTERVAL);
+    
+    maintenanceCheckRunning = true;
+    try {
+        // Add timeout to prevent long-running operation
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Maintenance check timed out')), 5000);
+        });
+        
+        const checkPromise = MaintenanceMode.checkAndStopExpired();
+        await Promise.race([checkPromise, timeoutPromise]);
+    } catch (error) {
+        console.error('Maintenance auto-stop check error:', error.message);
+        // Don't retry immediately on failure
+    } finally {
+        maintenanceCheckRunning = false;
+    }
+};
+
+// Start the interval after MongoDB is connected
+mongoose.connection.once('connected', () => {
+    console.log('Setting up maintenance check interval');
+    setInterval(performMaintenanceCheck, MAINTENANCE_CHECK_INTERVAL);
+});
 
 // Session setup
 app.use(session({
@@ -49,12 +72,41 @@ app.use(session({
     }
 }));
 
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => console.log('MongoDB connected'))
-  .catch(err => console.log(err));
+// MongoDB connection with improved error handling and retry logic
+const connectWithRetry = () => {
+    console.log('MongoDB connection attempt...');
+    mongoose.connect(process.env.MONGO_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 30000, // Increase timeout to 30 seconds
+        socketTimeoutMS: 45000, // Socket timeout
+        heartbeatFrequencyMS: 10000, // Heartbeat frequency
+        maxPoolSize: 10, // Maximum connection pool size
+        minPoolSize: 2, // Minimum connection pool size
+        connectTimeoutMS: 30000 // Connection timeout
+    })
+    .then(() => {
+        console.log('MongoDB connected successfully');
+        // Set up connection event listeners
+        mongoose.connection.on('error', (err) => {
+            console.error('MongoDB connection error:', err);
+            setTimeout(connectWithRetry, 5000);
+        });
+        
+        mongoose.connection.on('disconnected', () => {
+            console.log('MongoDB disconnected, attempting to reconnect...');
+            setTimeout(connectWithRetry, 5000);
+        });
+    })
+    .catch(err => {
+        console.error('MongoDB connection error:', err);
+        console.log('Retrying connection in 5 seconds...');
+        setTimeout(connectWithRetry, 5000);
+    });
+};
+
+// Initial connection attempt
+connectWithRetry();
 
 // MongoDB models
 const Request = require('./models/Request'); // Model for Moderator requests

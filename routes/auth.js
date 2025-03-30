@@ -99,22 +99,55 @@ router.get('/ping', (req, res) => {
     res.json({ success: true, timestamp: Date.now() });
 });
 
-// Add maintenance check endpoint
+// Add maintenance check endpoint with improved error handling
 router.get('/maintenance/status', async (req, res) => {
     try {
-        const maintenance = await MaintenanceMode.findOne({ isEnabled: true });
-        if (maintenance) {
-            await maintenance.autoStop();
-        }
-        
-        res.json({
-            inMaintenance: maintenance?.isEnabled || false,
-            endTime: maintenance?.calculateEndTime() || null,
-            message: maintenance?.message || '',
-            reason: maintenance?.reason || ''
+        // Add timeout to prevent long-running queries
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Maintenance status check timed out')), 5000);
         });
+        
+        const maintenancePromise = MaintenanceMode.findOne({ isEnabled: true }).exec();
+        
+        try {
+            // Race the database query against the timeout
+            const maintenance = await Promise.race([maintenancePromise, timeoutPromise]);
+            
+            if (maintenance) {
+                try {
+                    await Promise.race([
+                        maintenance.autoStop(),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Auto-stop timed out')), 3000))
+                    ]);
+                } catch (autoStopError) {
+                    console.error('Maintenance auto-stop error:', autoStopError.message);
+                    // Continue even if auto-stop fails
+                }
+            }
+            
+            res.json({
+                inMaintenance: maintenance?.isEnabled || false,
+                endTime: maintenance?.calculateEndTime() || null,
+                message: maintenance?.message || '',
+                reason: maintenance?.reason || ''
+            });
+        } catch (timeoutError) {
+            console.error('Maintenance status check timed out:', timeoutError.message);
+            // Return a default response if the query times out
+            res.json({
+                inMaintenance: false,
+                endTime: null,
+                message: '',
+                reason: '',
+                error: 'Status check timed out'
+            });
+        }
     } catch (error) {
-        res.status(500).json({ error: 'Error checking maintenance status' });
+        console.error('Error checking maintenance status:', error);
+        res.status(500).json({ 
+            error: 'Error checking maintenance status',
+            message: error.message
+        });
     }
 });
 
