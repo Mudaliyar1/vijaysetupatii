@@ -1,3 +1,14 @@
+// Add at the beginning of the file
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+    // Prevent the app from crashing silently
+    process.exit(1);
+});
+
 require('dotenv').config(); // Add this line to load .env variables
 const express = require('express');
 const mongoose = require('mongoose');
