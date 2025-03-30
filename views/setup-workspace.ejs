@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.tailwindcss.com; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;">
     <title>Setting Up Workspace</title>
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
 <body class="bg-gray-900 text-white">
     <main class="min-h-screen flex items-center justify-center">
         <div class="text-center">
@@ -52,21 +52,29 @@
     <script>
         let progress = 0;
         let setupStartTime = Date.now();
-        const MAX_SETUP_TIME = 10000;
+        const MAX_SETUP_TIME = 15000;
         const finalRedirect = '<%= redirectUrl %>';
         let connectionQuality = 'checking';
         let lastLatency = 0;
         let progressIncrement = 0;
+        let securityChecks = {
+            sqlInjection: false,
+            xss: false,
+            csrf: false
+        };
 
         // Add randomization to progress steps
         const getRandomProgress = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
 
         const setupStages = [
-            { progress: getRandomProgress(0, 15), message: 'Checking connection...', color: 'rgb(156, 163, 175)' },
-            { progress: getRandomProgress(20, 35), message: 'Verifying role...', color: 'rgb(234, 179, 8)' },
-            { progress: getRandomProgress(40, 65), message: 'Setting up environment...', color: 'rgb(59, 130, 246)' },
-            { progress: getRandomProgress(70, 85), message: 'Finalizing setup...', color: 'rgb(34, 197, 94)' },
-            { progress: 100, message: 'Done!', color: 'rgb(34, 197, 94)' }
+            { progress: getRandomProgress(0, 10), message: 'Checking connection...', color: 'rgb(156, 163, 175)' },
+            { progress: getRandomProgress(15, 25), message: 'Testing SQL injection protection...', color: 'rgb(234, 179, 8)' },
+            { progress: getRandomProgress(30, 40), message: 'Verifying XSS protection...', color: 'rgb(234, 179, 8)' },
+            { progress: getRandomProgress(45, 55), message: 'Checking CSRF safeguards...', color: 'rgb(234, 179, 8)' },
+            { progress: getRandomProgress(60, 70), message: 'Verifying user role...', color: 'rgb(59, 130, 246)' },
+            { progress: getRandomProgress(75, 85), message: 'Setting up secure environment...', color: 'rgb(59, 130, 246)' },
+            { progress: getRandomProgress(90, 95), message: 'Finalizing security checks...', color: 'rgb(34, 197, 94)' },
+            { progress: 100, message: 'Workspace secured!', color: 'rgb(34, 197, 94)' }
         ];
 
         async function checkConnection() {
@@ -75,19 +83,33 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-                const response = await fetch('/auth/ping', { signal: controller.signal });
+                const response = await fetch('/auth/ping', {
+                    signal: controller.signal,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
                 clearTimeout(timeoutId);
 
                 if (!response.ok) throw new Error('Connection failed');
+                
+                const data = await response.json();
+                if (!data || typeof data !== 'object') {
+                    throw new Error('Invalid response format');
+                }
                 
                 lastLatency = Math.round(performance.now() - start);
                 updateConnectionStatus(lastLatency);
                 
                 // Adjust progress increment based on connection quality
-                progressIncrement = connectionQuality === 'good' ? getRandomProgress(10, 15) : connectionQuality === 'medium' ? getRandomProgress(5, 10) : getRandomProgress(1, 5);
+                progressIncrement = connectionQuality === 'good' ? getRandomProgress(8, 12) : 
+                                   connectionQuality === 'medium' ? getRandomProgress(4, 8) : 
+                                   getRandomProgress(1, 4);
                 
                 return lastLatency;
             } catch (error) {
+                console.error('Connection check error:', error);
                 updateConnectionStatus(-1);
                 return -1;
             }
@@ -109,9 +131,14 @@
 
             latencyValue.textContent = latency;
 
-            if (latency < 100) {
+            if (latency < 80) {
                 connectionQuality = 'good';
                 indicator.className = 'w-3 h-3 rounded-full bg-green-500 animate-pulse';
+                text.className = 'text-green-400';
+                text.textContent = 'Connection Excellent';
+            } else if (latency < 150) {
+                connectionQuality = 'good';
+                indicator.className = 'w-3 h-3 rounded-full bg-green-500';
                 text.className = 'text-green-400';
                 text.textContent = 'Connection Good';
             } else if (latency < 300) {
@@ -185,6 +212,20 @@
                         return;
                     }
 
+                    // Simulate security checks
+                    if (progress >= 15 && !securityChecks.sqlInjection) {
+                        securityChecks.sqlInjection = true;
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                    if (progress >= 30 && !securityChecks.xss) {
+                        securityChecks.xss = true;
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                    if (progress >= 45 && !securityChecks.csrf) {
+                        securityChecks.csrf = true;
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+
                     // Increase progress based on connection quality
                     progress += progressIncrement * (connectionQuality === 'good' ? 1.5 : 
                                connectionQuality === 'medium' ? 1 : 0.5);
@@ -192,20 +233,20 @@
                     // Update UI
                     updateProgress(Math.min(progress, 100));
 
-                    // Check connection every 20% progress or if connection is poor
-                    if (progress % 20 <= progressIncrement || connectionQuality === 'poor') {
+                    // Check connection every 15% progress or if connection is poor
+                    if (progress % 15 <= progressIncrement || connectionQuality === 'poor') {
                         await checkConnection();
                     }
 
                     // When complete
                     if (progress >= 100) {
                         clearInterval(progressInterval);
-                        document.getElementById('statusText').textContent = 'Setup complete!';
+                        document.getElementById('statusText').textContent = 'Workspace secured and ready!';
                         setTimeout(() => {
                             window.location.replace(finalRedirect);
-                        }, 500);
+                        }, 1000);
                     }
-                }, connectionQuality === 'good' ? 50 : connectionQuality === 'medium' ? 75 : 100);
+                }, connectionQuality === 'good' ? 100 : connectionQuality === 'medium' ? 150 : 200);
 
             } catch (error) {
                 console.error('Setup error:', error);
