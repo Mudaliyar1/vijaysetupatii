@@ -5,69 +5,73 @@ const MaintenanceMode = require('../models/MaintenanceMode');
 const MaintenanceLoginAttempt = require('../models/MaintenanceLoginAttempt');
 const requestIp = require('request-ip');
 
-// Update the login route
 router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
-        const [user, maintenance] = await Promise.all([
-            User.findOne({ username }),
-            MaintenanceMode.findOne({ isEnabled: true })
-        ]);
+        
+        // Debug log
+        console.log('Login attempt for username:', username);
 
         // Check maintenance mode first
-        if (maintenance?.isEnabled) {
-            // Record login attempt
-            await MaintenanceLoginAttempt.create({
-                username,
-                role: user?.role || 'Unknown',
-                ip: requestIp.getClientIp(req),
-                userAgent: req.headers['user-agent'],
-                success: false,
-                maintenanceId: maintenance._id
-            });
+        const maintenance = await MaintenanceMode.findOne({ isEnabled: true });
 
-            if (!user || user.role !== 'Admin') {
-                return res.status(403).json({
-                    success: false,
-                    error: 'System is under maintenance. Only administrators can access.',
-                    maintenance: true,
-                    countdown: 5,
-                    redirectUrl: '/maintenance'
-                });
-            }
-        }
+        // Find user with credentials
+        const user = await User.findByCredentials(username, password);
+        
+        // Debug log
+        console.log('User found:', user ? 'Yes' : 'No');
 
-        if (!user || user.password !== password) {
+        if (!user) {
             return res.status(401).json({
                 success: false,
                 error: 'Invalid username or password'
             });
         }
 
-        // Set session data
+        // Handle maintenance mode access
+        if (maintenance?.isEnabled) {
+            await MaintenanceLoginAttempt.create({
+                username: user.username,
+                role: user.role,
+                ip: requestIp.getClientIp(req),
+                userAgent: req.headers['user-agent'],
+                success: user.role === 'Admin',
+                maintenanceId: maintenance._id
+            });
+
+            if (user.role !== 'Admin') {
+                return res.status(403).json({
+                    success: false,
+                    error: 'System is under maintenance. Only administrators can access.',
+                    maintenance: true
+                });
+            }
+        }
+
+        // Set session
         req.session.user = {
             id: user._id,
             username: user.username,
             role: user.role
         };
 
-        // For admin users
-        if (user.role === 'Admin') {
-            return res.json({
-                success: true,
-                redirectUrl: '/setup-workspace'
-            });
-        }
-
+        // Return success response
         res.json({
             success: true,
-            redirectUrl: '/profile'
+            user: {
+                username: user.username,
+                role: user.role
+            },
+            redirectUrl: user.role === 'Admin' ? '/admin/dashboard' : 
+                        user.role === 'Moderator' ? '/moderator/dashboard' : 
+                        '/profile'
         });
+
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ 
             success: false, 
-            error: 'Server error occurred' 
+            error: 'An error occurred during login' 
         });
     }
 });

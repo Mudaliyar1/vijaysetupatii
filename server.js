@@ -8,31 +8,6 @@ const methodOverride = require('method-override');
 const requestIp = require('request-ip'); // Add this line
 const { MaintenanceMode } = require('./models'); // Add this import
 
-// Add better error handling for model loading
-try {
-    const models = require('./models');
-    
-    // Verify all required models are loaded
-    const requiredModels = [
-        'Movie', 'Award', 'User', 'Request', 'MaintenanceMode',
-        'Message', 'Post', 'Notification', 'MaintenanceLoginAttempt',
-        'MaintenanceVisitor'
-    ];
-    
-    const missingModels = requiredModels.filter(model => !models[model]);
-    
-    if (missingModels.length) {
-        console.warn('Warning: Missing required models:', missingModels);
-    }
-    
-    // Make models globally available
-    global.models = models;
-    
-} catch (error) {
-    console.error('Fatal error loading models:', error);
-    process.exit(1);
-}
-
 const app = express();
 
 // Middleware setup
@@ -83,6 +58,23 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/vijaysetu
 
 // MongoDB models
 const Request = require('./models/Request'); // Model for Moderator requests
+
+// Initialize models before routes
+try {
+    const models = require('./models');
+    global.models = models; // Make models globally available
+    
+    // Add model verification
+    const requiredModels = ['Movie', 'User', 'MaintenanceMode'];
+    const missingModels = requiredModels.filter(model => !models[model]);
+    
+    if (missingModels.length) {
+        console.warn('Warning: Missing models:', missingModels);
+    }
+} catch (error) {
+    console.error('Error loading models:', error);
+    process.exit(1);
+}
 
 // Authentication middleware
 function isAuthenticated(req, res, next) {
@@ -182,22 +174,15 @@ app.post('/register', async (req, res) => {
 // Add requestIp middleware before your routes
 app.use(requestIp.mw());
 
-// Add this before your routes
+// Initialize routes after models
+const publicRoutes = require('./routes/public');
+const adminRoutes = require('./routes/admin');
 try {
-    // Load models first
-    const models = require('./models');
-    
-    // Verify Movie model exists
-    if (!models.Movie) {
-        throw new Error('Movie model not loaded properly');
-    }
-
     // Load routes after models are verified
-    const adminRoutes = require('./routes/admin');
     app.use('/admin', adminRoutes);
     
     // Continue with route loading
-    app.use('/', require('./routes/public'));
+    app.use('/', publicRoutes);
     app.use('/auth', require('./routes/auth'));
     app.use('/moderator', require('./routes/moderator'));
 } catch (error) {

@@ -1,18 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const Movie = require('../models/Movie'); // Correct case-sensitive path
-const { models } = require('mongoose');
+const mongoose = require('mongoose');
+
+// Import models from local models directory instead of mongoose models
+const localModels = require('../models');
+const { Movie, Award, User } = localModels;
 
 // Use safer model access
-const Award = require('../models/Award'); // Import Award model
 const Message = require('../models/Message'); // Import Message model
-const User = require('../models/User'); // Import User model
 const Post = require('../models/Post'); // Import Post model
 const Notification = require('../models/Notification'); // Import Notification model
 const MaintenanceMode = require('../models/MaintenanceMode'); // Import MaintenanceMode model
 const { isAuthenticated, isUser } = require('../middleware/auth'); // Import authentication middleware
 const methodOverride = require('method-override');
-const mongoose = require('mongoose');
 router.use(methodOverride('_method'));
 
 // Add maintenance check to all public routes
@@ -71,8 +71,13 @@ router.get('/about', (req, res) => {
     res.render('about', { user: req.session.user || null });
 });
 router.get('/movies', async (req, res) => {
-    const movies = await Movie.find(); // Fetch movies from the database
-    res.render('movies', { movies, user: req.session.user || null });
+    try {
+        const movies = await Movie.find();
+        res.render('movies', { movies });
+    } catch (error) {
+        console.error('Error fetching movies:', error);
+        res.status(500).send('Error loading movies');
+    }
 });
 router.get('/movies/:id', async (req, res) => {
     const movie = await Movie.findById(req.params.id);

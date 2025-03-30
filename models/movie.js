@@ -12,5 +12,5 @@ const movieSchema = new mongoose.Schema({
     language: { type: String, trim: true }
 }, { timestamps: true });
 
-// Use existing model if available, otherwise create new one
-module.exports = mongoose.models.Movie || mongoose.model('Movie', movieSchema);
+const Movie = mongoose.models.Movie || mongoose.model('Movie', movieSchema);
+module.exports = Movie;
