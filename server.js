@@ -75,7 +75,18 @@ app.use(session({
 // MongoDB connection with improved error handling and retry logic
 const connectWithRetry = () => {
     console.log('MongoDB connection attempt...');
-    mongoose.connect(process.env.MONGO_URI, {
+    
+    // Check if MONGO_URI is defined
+    const mongoUri = process.env.MONGO_URI;
+    if (!mongoUri) {
+        console.error('MongoDB connection error: MONGO_URI environment variable is not defined');
+        console.error('Please make sure the .env file exists and contains MONGO_URI or set it as an environment variable');
+        console.log('Retrying connection in 10 seconds...');
+        setTimeout(connectWithRetry, 10000);
+        return;
+    }
+    
+    mongoose.connect(mongoUri, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
         serverSelectionTimeoutMS: 30000, // Increase timeout to 30 seconds

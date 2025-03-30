@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const MaintenanceMode = require('../models/MaintenanceMode');
 const MaintenanceVisitor = require('../models/MaintenanceVisitor');
 const requestIp = require('request-ip');
@@ -12,6 +13,12 @@ const maintenanceCheck = async (req, res, next) => {
         // Define paths that should always be accessible
         const allowedPaths = ['/login', '/maintenance', '/auth/login', '/setup-workspace', '/auth/ping'];
         if (allowedPaths.includes(req.path)) {
+            return next();
+        }
+        
+        // Check if MongoDB is connected before querying
+        if (mongoose.connection.readyState !== 1) {
+            console.log('Database not connected during maintenance check, allowing request to proceed');
             return next();
         }
 
