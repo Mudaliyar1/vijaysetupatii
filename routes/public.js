@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const Movie = require('../models/Movie'); // Import Movie model
+const { models } = require('mongoose');
+
+// Get Movie model safely
+const Movie = models.Movie || require('../models/Movie');
 const Award = require('../models/Award'); // Import Award model
 const Message = require('../models/Message'); // Import Message model
 const User = require('../models/User'); // Import User model

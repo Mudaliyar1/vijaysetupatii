@@ -8,22 +8,18 @@ const methodOverride = require('method-override');
 const requestIp = require('request-ip'); // Add this line
 const { MaintenanceMode } = require('./models'); // Add this import
 
-// Update model loading with better error handling
+// Add better error handling for model loading
 try {
     const models = require('./models');
+    global.models = models; // Make models available globally
+    
     console.log('Models loaded:', Object.keys(models));
-    
-    // Check for required models but don't try to recompile them
-    const requiredModels = [
-        'Movie', 'Award', 'User', 'Message', 
-        'Post', 'Notification', 'Request',
-        'MaintenanceMode', 'MaintenanceLoginAttempt', 'MaintenanceVisitor'
-    ];
-    
-    const missingModels = requiredModels.filter(model => !models[model]);
-    if (missingModels.length) {
-        console.warn('Warning: Missing models:', missingModels);
-        // Continue running even with missing models
+
+    // Check for Movie model specifically
+    if (!models.Movie) {
+        console.warn('Warning: Movie model not found, creating it');
+        const Movie = require('./models/Movie');
+        models.Movie = Movie;
     }
 } catch (error) {
     console.error('Error loading models:', error);
@@ -72,11 +68,11 @@ app.use(session({
 }));
 
 // MongoDB connection
-mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => console.log('MongoDB connected'))
-  .catch(err => console.log(err));
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/vijaysetupathi', {
+    dbName: 'vijaysetupathi'
+})
+.then(() => console.log('MongoDB connected'))
+.catch(err => console.error('MongoDB connection error:', err));
 
 // MongoDB models
 const Request = require('./models/Request'); // Model for Moderator requests
@@ -257,14 +253,13 @@ app.post('/admin/requests/:id/reject', isAuthenticated, isAdmin, async (req, res
     }
 });
 
-// Add error handling for uncaught exceptions
+// Add error handlers
 process.on('uncaughtException', (err) => {
     console.error('Uncaught Exception:', err);
     // Give time for logs to be written
     setTimeout(() => process.exit(1), 1000);
 });
 
-// Add error handling for unhandled promise rejections
 process.on('unhandledRejection', (err) => {
     console.error('Unhandled Rejection:', err);
 });

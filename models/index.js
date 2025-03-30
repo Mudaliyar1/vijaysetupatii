@@ -1,23 +1,26 @@
 const path = require('path');
 const fs = require('fs');
 
-// Initialize models object
 const models = {};
 
-// Get all model files
-const modelFiles = fs.readdirSync(__dirname)
-    .filter(file => file !== 'index.js' && file.endsWith('.js'));
+try {
+    const modelFiles = fs.readdirSync(__dirname)
+        .filter(file => file !== 'index.js' && file.endsWith('.js'));
 
-// Load each model with error handling and prevent duplicate compilation
-modelFiles.forEach(file => {
-    try {
-        const modelName = path.basename(file, '.js');
-        // Use existing model if already compiled
-        models[modelName] = require(path.join(__dirname, file));
-        console.log(`Loaded model: ${modelName}`);
-    } catch (error) {
-        console.error(`Error loading model ${file}:`, error.message);
-    }
-});
+    modelFiles.forEach(file => {
+        try {
+            // Use proper casing for model names - capitalize first letter
+            const modelName = path.basename(file, '.js');
+            const formattedName = modelName.charAt(0).toUpperCase() + modelName.slice(1);
+            const Model = require(path.join(__dirname, file));
+            models[formattedName] = Model;
+            console.log(`Loaded model: ${formattedName}`);
+        } catch (error) {
+            console.error(`Error loading model ${file}:`, error.message);
+        }
+    });
+} catch (error) {
+    console.error('Error loading models:', error);
+}
 
 module.exports = models;
