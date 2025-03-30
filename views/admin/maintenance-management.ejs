@@ -300,19 +300,19 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div class="bg-gray-700 p-4 rounded-lg">
                     <h4 class="text-sm text-gray-400">Total Visitors</h4>
-                    <p class="text-2xl font-bold" id="totalVisitors">0</p>
+                    <p class="text-2xl font-bold"><%= stats.totalVisits %></p>
                 </div>
                 <div class="bg-gray-700 p-4 rounded-lg">
                     <h4 class="text-sm text-gray-400">Unique IPs</h4>
-                    <p class="text-2xl font-bold" id="uniqueIPs">0</p>
+                    <p class="text-2xl font-bold"><%= stats.uniqueIPs %></p>
                 </div>
                 <div class="bg-gray-700 p-4 rounded-lg">
                     <h4 class="text-sm text-gray-400">Login Attempts</h4>
-                    <p class="text-2xl font-bold" id="totalAttempts">0</p>
+                    <p class="text-2xl font-bold"><%= stats.totalLogins %></p>
                 </div>
                 <div class="bg-gray-700 p-4 rounded-lg">
                     <h4 class="text-sm text-gray-400">Moderator Attempts</h4>
-                    <p class="text-2xl font-bold" id="moderatorAttempts">0</p>
+                    <p class="text-2xl font-bold"><%= stats.moderatorAttempts %></p>
                 </div>
             </div>
         </div>

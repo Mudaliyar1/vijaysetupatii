@@ -21,9 +21,14 @@ app.set('view engine', 'ejs');
 
 const maintenanceCheck = require('./middleware/maintenance');
 const responseHelper = require('./middleware/responseHelper');
+const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
 // Add response helpers (single instance)
 app.use(responseHelper);
+
+// Add security routes
+const securityRoutes = require('./routes/security');
+app.use('/security', securityRoutes);
 
 // Add maintenance check middleware
 app.use(maintenanceCheck);
@@ -75,6 +80,12 @@ app.use(session({
 
 // Trust proxy - required for secure cookies to work behind a proxy like Render
 app.set('trust proxy', 1);
+
+// Error handling middleware (must be after all routes)
+app.use(errorHandler);
+
+// 404 handler (must be after all routes)
+app.use(notFoundHandler);
 
 // MongoDB connection with improved error handling and retry logic
 const connectWithRetry = () => {

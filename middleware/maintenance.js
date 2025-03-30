@@ -5,6 +5,25 @@ const requestIp = require('request-ip');
 
 const maintenanceCheck = async (req, res, next) => {
     try {
+        const maintenance = await MaintenanceMode.findOne({ isEnabled: true });
+        
+        // Track visitor if maintenance is enabled
+        if (maintenance?.isEnabled) {
+            const visitorData = {
+                ip: requestIp.getClientIp(req),
+                userAgent: req.headers['user-agent'],
+                path: req.path,
+                referrer: req.headers.referer || '',
+                maintenanceId: maintenance._id
+            };
+            
+            try {
+                await MaintenanceVisitor.create(visitorData);
+            } catch (error) {
+                console.error('Error tracking visitor:', error);
+            }
+        }
+
         // Always bypass maintenance check for admin paths and admin users
         if (req.session?.user?.role === 'Admin' || req.path.startsWith('/admin/')) {
             return next();

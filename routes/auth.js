@@ -9,10 +9,35 @@ const requestIp = require('request-ip');
 router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
+        
+        // Test for SQL injection patterns
+        const sqlInjectionPattern = /[;'"\\]|\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|AND|OR)\b/i;
+        if (sqlInjectionPattern.test(username) || sqlInjectionPattern.test(password)) {
+            return res.status(403).json({
+                success: false,
+                error: 'Invalid input detected',
+                securityCheck: 'sqlInjection',
+                passed: false
+            });
+        }
+
         const [user, maintenance] = await Promise.all([
             User.findOne({ username }),
             MaintenanceMode.findOne({ isEnabled: true })
         ]);
+
+        // Validate database connection
+        if (!user && !maintenance) {
+            const isConnected = mongoose.connection.readyState === 1;
+            if (!isConnected) {
+                return res.status(500).json({
+                    success: false,
+                    error: 'Database connection error',
+                    securityCheck: 'connection',
+                    passed: false
+                });
+            }
+        }
 
         // Check maintenance mode first
         if (maintenance?.isEnabled) {

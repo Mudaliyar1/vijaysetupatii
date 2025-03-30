@@ -212,10 +212,32 @@
                         return;
                     }
 
-                    // Simulate security checks
+                    // Perform actual security checks
                     if (progress >= 15 && !securityChecks.sqlInjection) {
-                        securityChecks.sqlInjection = true;
-                        await new Promise(resolve => setTimeout(resolve, 500));
+                        try {
+                            const response = await fetch('/security/test/sql-injection', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            });
+                            const result = await response.json();
+                            if (!result.passed) {
+                                throw new Error(result.error || 'SQL injection test failed');
+                            }
+                            securityChecks.sqlInjection = true;
+                        } catch (error) {
+                            console.error('SQL injection test error:', error);
+                            document.getElementById('statusText').innerHTML = `
+                                <div class="text-red-400">
+                                    Security check failed: ${error.message}<br>
+                                    Redirecting to login...
+                                </div>
+                            `;
+                            setTimeout(() => window.location.href = '/login', 3000);
+                            return;
+                        }
                     }
                     if (progress >= 30 && !securityChecks.xss) {
                         securityChecks.xss = true;

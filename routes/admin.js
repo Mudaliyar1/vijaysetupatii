@@ -186,22 +186,41 @@ async function calculateAverageDuration() {
 
 router.get('/maintenance', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        // Get current maintenance status
-        const [maintenance, maintenanceHistory, avgDuration, totalMaintenance, autoDisabled] = await Promise.all([
+        // Get current maintenance status and statistics
+        const [maintenance, maintenanceHistory, avgDuration, totalMaintenance, autoDisabled, visitorStats] = await Promise.all([
             MaintenanceMode.findOne(),
             MaintenanceMode.find().sort('-startTime').limit(10),
             calculateAverageDuration(),
             MaintenanceMode.countDocuments(),
-            MaintenanceMode.countDocuments({ autoDisabled: true })
+            MaintenanceMode.countDocuments({ autoDisabled: true }),
+            MaintenanceVisitor.aggregate([
+                {
+                    $group: {
+                        _id: null,
+                        totalVisitors: { $sum: 1 },
+                        uniqueIPs: { $addToSet: '$ip' }
+                    }
+                }
+            ])
+        ]);
+
+        // Get login attempt statistics
+        const [totalLogins, moderatorAttempts] = await Promise.all([
+            MaintenanceLoginAttempt.countDocuments(),
+            MaintenanceLoginAttempt.countDocuments({
+                role: { $in: ['Admin', 'Moderator'] }
+            })
         ]);
 
         // Calculate stats
         const stats = {
             totalMaintenance,
             avgDuration,
-            totalVisits: await MaintenanceVisitor.countDocuments(),
+            totalVisits: visitorStats[0]?.totalVisitors || 0,
+            uniqueIPs: visitorStats[0]?.uniqueIPs?.length || 0,
             autoDisabled,
-            totalLogins: await MaintenanceLoginAttempt.countDocuments()
+            totalLogins,
+            moderatorAttempts
         };
 
         res.render('admin/maintenance-management', {

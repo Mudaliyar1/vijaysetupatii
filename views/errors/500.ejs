@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - Internal Server Error</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center">
+    <div class="text-center px-4">
+        <h1 class="text-6xl font-bold text-red-400 mb-4">500</h1>
+        <h2 class="text-2xl font-semibold mb-4">Internal Server Error</h2>
+        <p class="text-gray-400 mb-8">Our servers are experiencing some technical difficulties.</p>
+        
+        <div class="space-y-4">
+            <button onclick="window.location.reload()" class="inline-block bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-2 rounded-lg transition-colors mr-4">
+                Try Again
+            </button>
+            
+            <a href="/" class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-2 rounded-lg transition-colors">
+                Return Home
+            </a>
+            
+            <div class="text-sm text-gray-500 mt-4">
+                <p>Our team has been notified and is working to fix the issue.</p>
+                <p>Please try again in a few moments.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Track 500 errors for analytics
+        window.addEventListener('load', () => {
+            if (typeof gtag === 'function') {
+                gtag('event', '500_error', {
+                    'page_location': window.location.href,
+                    'page_title': document.title
+                });
+            }
+        });
+    </script>
+</body>
+</html>
