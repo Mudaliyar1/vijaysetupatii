@@ -8,6 +8,14 @@ const methodOverride = require('method-override');
 const requestIp = require('request-ip'); // Add this line
 const { MaintenanceMode } = require('./models'); // Add this import
 
+// Update model imports to use try-catch for graceful error handling
+try {
+    require('./models');
+} catch (error) {
+    console.error('Error loading models:', error);
+    process.exit(1);
+}
+
 const app = express();
 
 // Middleware setup
@@ -233,6 +241,18 @@ app.post('/admin/requests/:id/reject', isAuthenticated, isAdmin, async (req, res
     } catch (err) {
         res.status(500).send('Error rejecting request');
     }
+});
+
+// Add error handling for uncaught exceptions
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    // Give time for logs to be written
+    setTimeout(() => process.exit(1), 1000);
+});
+
+// Add error handling for unhandled promise rejections
+process.on('unhandledRejection', (err) => {
+    console.error('Unhandled Rejection:', err);
 });
 
 // Start server
