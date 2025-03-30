@@ -175,23 +175,27 @@ app.post('/register', async (req, res) => {
 // Add requestIp middleware before your routes
 app.use(requestIp.mw());
 
-// Add this before loading routes
+// Add this before your routes
 try {
+    // Load models first
     const models = require('./models');
-    const Movie = models.Movie;
     
-    if (!Movie) {
-        console.warn('Movie model not found, attempting to load directly');
-        require('./models/Movie');
+    // Verify Movie model exists
+    if (!models.Movie) {
+        throw new Error('Movie model not loaded properly');
     }
+
+    // Load routes after models are verified
+    const adminRoutes = require('./routes/admin');
+    app.use('/admin', adminRoutes);
     
     // Continue with route loading
     app.use('/', require('./routes/public'));
     app.use('/auth', require('./routes/auth'));
-    app.use('/admin', require('./routes/admin'));
     app.use('/moderator', require('./routes/moderator'));
 } catch (error) {
-    console.error('Error loading models:', error);
+    console.error('Server startup error:', error);
+    // Continue running with limited functionality
     process.exit(1);
 }
 
