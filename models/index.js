@@ -1,10 +1,7 @@
-module.exports = {
-    Movie: require('./Movie'),
-    Award: require('./Award'),
-    Message: require('./Message'),
-    User: require('./User'),
-    Post: require('./Post'),
-    Notification: require('./Notification'),
-    MaintenanceMode: require('./MaintenanceMode'),
-    Request: require('./Request')
-};
+const Movie = require('./Movie');
+const Award = require('./Award');
+const User = require('./User');
+const Request = require('./Request');
+const MaintenanceMode = require('./MaintenanceMode');
+
+module.exports = { Movie, Award, User, Request, MaintenanceMode };
