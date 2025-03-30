@@ -6,20 +6,17 @@ const { safeStringify } = require('../utils/jsonHelper');
 const he = require('he'); // Import he for encoding
 const requestIp = require('request-ip'); // Add this after existing imports
 
-// Import models from index.js
-const models = require('../models');
-const {
-    Movie,
-    Award,
-    User,
-    Request,
-    MaintenanceMode,
-    Message,
-    Post,
-    Notification,
-    MaintenanceLoginAttempt,
-    MaintenanceVisitor
-} = models;
+// Import all required models
+const Movie = require('../models/Movie');
+const Award = require('../models/Award');
+const User = require('../models/User');
+const Request = require('../models/Request');
+const MaintenanceMode = require('../models/MaintenanceMode');
+const Message = require('../models/Message');
+const Post = require('../models/Post');
+const Notification = require('../models/Notification');
+const MaintenanceLoginAttempt = require('../models/MaintenanceLoginAttempt');
+const MaintenanceVisitor = require('../models/MaintenanceVisitor');
 
 const methodOverride = require('method-override');
 

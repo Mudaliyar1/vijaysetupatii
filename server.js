@@ -50,31 +50,14 @@ app.use(session({
 }));
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/vijaysetupathi', {
-    dbName: 'vijaysetupathi'
-})
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.error('MongoDB connection error:', err));
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => console.log('MongoDB connected'))
+  .catch(err => console.log(err));
 
 // MongoDB models
 const Request = require('./models/Request'); // Model for Moderator requests
-
-// Initialize models before routes
-try {
-    const models = require('./models');
-    global.models = models; // Make models globally available
-    
-    // Add model verification
-    const requiredModels = ['Movie', 'User', 'MaintenanceMode'];
-    const missingModels = requiredModels.filter(model => !models[model]);
-    
-    if (missingModels.length) {
-        console.warn('Warning: Missing models:', missingModels);
-    }
-} catch (error) {
-    console.error('Error loading models:', error);
-    process.exit(1);
-}
 
 // Authentication middleware
 function isAuthenticated(req, res, next) {
@@ -174,22 +157,11 @@ app.post('/register', async (req, res) => {
 // Add requestIp middleware before your routes
 app.use(requestIp.mw());
 
-// Initialize routes after models
-const publicRoutes = require('./routes/public');
-const adminRoutes = require('./routes/admin');
-try {
-    // Load routes after models are verified
-    app.use('/admin', adminRoutes);
-    
-    // Continue with route loading
-    app.use('/', publicRoutes);
-    app.use('/auth', require('./routes/auth'));
-    app.use('/moderator', require('./routes/moderator'));
-} catch (error) {
-    console.error('Server startup error:', error);
-    // Continue running with limited functionality
-    process.exit(1);
-}
+// Routes setup
+app.use('/', require('./routes/public'));
+app.use('/auth', require('./routes/auth'));
+app.use('/admin', require('./routes/admin'));
+app.use('/moderator', require('./routes/moderator'));
 
 // Setup workspace route
 app.get('/setup-workspace', isAuthenticated, (req, res) => {
@@ -261,17 +233,6 @@ app.post('/admin/requests/:id/reject', isAuthenticated, isAdmin, async (req, res
     } catch (err) {
         res.status(500).send('Error rejecting request');
     }
-});
-
-// Add error handlers
-process.on('uncaughtException', (err) => {
-    console.error('Uncaught Exception:', err);
-    // Give time for logs to be written
-    setTimeout(() => process.exit(1), 1000);
-});
-
-process.on('unhandledRejection', (err) => {
-    console.error('Unhandled Rejection:', err);
 });
 
 // Start server
