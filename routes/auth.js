@@ -4,6 +4,7 @@ const User = require('../models/User');
 const MaintenanceMode = require('../models/MaintenanceMode');
 const MaintenanceLoginAttempt = require('../models/MaintenanceLoginAttempt');
 const requestIp = require('request-ip');
+const bcrypt = require('bcrypt');
 
 // Update the login route
 router.post('/login', async (req, res) => {
@@ -62,7 +63,7 @@ router.post('/login', async (req, res) => {
             }
         }
 
-        if (!user || user.password !== password) {
+        if (!user || !bcrypt.compareSync(password, user.password)) {
             return res.status(401).json({
                 success: false,
                 error: 'Invalid username or password'
