@@ -106,7 +106,7 @@ router.get('/dashboard', isAuthenticated, isAdmin, async (req, res) => {
             const sessions = await new Promise((resolve, reject) => {
                 store.all((err, sessions) => {
                     if (err) reject(err);
-                    resolve(sessions || []);
+                    resolve(Array.isArray(sessions) ? sessions : []);
                 });
             });
             activeUsers = sessions

@@ -9,7 +9,7 @@ function isAdmin(req, res, next) {
     if (req.session && req.session.user && req.session.user.role === 'Admin') {
         return next();
     }
-    res.status(403).send('Access denied');
+    res.redirect('/login');
 }
 
 function isModerator(req, res, next) {
