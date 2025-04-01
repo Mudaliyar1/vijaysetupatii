@@ -31,6 +31,10 @@ app.use(responseHelper);
 const securityRoutes = require('./routes/security');
 app.use('/security', securityRoutes);
 
+// Add AI chat routes
+const aiChatRoutes = require('./routes/ai-chat');
+app.use('/ai-chat', aiChatRoutes);
+
 // Add maintenance check middleware
 app.use(maintenanceCheck);
 
