@@ -131,7 +131,7 @@
         <div id="addUserModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
             <div class="bg-gray-800 rounded-lg w-96 mx-auto mt-20 p-6">
                 <h3 class="text-xl font-bold mb-4">Add New User</h3>
-                <form action="/admin/users/add" method="POST" class="space-y-4">
+                <form action="/admin/users" method="POST" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium mb-2">Username</label>
                         <input type="text" name="username" required minlength="3"
@@ -179,34 +179,33 @@
         <div id="editUserModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
             <div class="bg-gray-800 rounded-lg w-96 mx-auto mt-20 p-6">
                 <h3 class="text-xl font-bold mb-4">Edit User</h3>
-                <form id="editUserForm" action="/admin/users/" method="POST">
-                    <input type="hidden" name="userId" id="editUserId">
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Username</label>
-                            <input type="text" name="username" id="editUsername" required
-                                   class="w-full px-3 py-2 bg-gray-700 rounded-lg">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">New Password (optional)</label>
-                            <input type="password" name="password"
-                                   class="w-full px-3 py-2 bg-gray-700 rounded-lg">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Role</label>
-                            <select name="role" id="editRole" class="w-full px-3 py-2 bg-gray-700 rounded-lg">
-                                <option value="User">User</option>
-                                <option value="Moderator">Moderator</option>
-                                <option value="Admin">Admin</option>
-                            </select>
-                        </div>
+                <form id="editUserForm" action="/admin/users/update" method="POST" class="space-y-4">
+                    <input type="hidden" id="editUserId" name="id">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Username</label>
+                        <input type="text" id="editUsername" name="username" required 
+                               class="w-full px-3 py-2 bg-gray-700 rounded-lg text-white">
                     </div>
-                    <div class="mt-6 flex justify-end space-x-3">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">New Password</label>
+                        <input type="password" id="editPassword" name="password" 
+                               class="w-full px-3 py-2 bg-gray-700 rounded-lg text-white"
+                               placeholder="Leave blank to keep current password">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Role</label>
+                        <select id="editRole" name="role" required 
+                                class="w-full px-3 py-2 bg-gray-700 rounded-lg text-white">
+                            <option value="User">User</option>
+                            <option value="Moderator">Moderator</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3">
                         <button type="button" onclick="closeEditUserModal()"
                                 class="px-4 py-2 bg-gray-700 rounded-lg">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg">
-                            <%= typeof currentUser !== 'undefined' && currentUser.role === 'Admin' ? 'Update User' : 'Submit for Approval' %>
-                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">Update</button>
                     </div>
                 </form>
             </div>
@@ -233,15 +232,12 @@
         function openEditUserModal(userId, username, role) {
             const modal = document.getElementById('editUserModal');
             const form = document.getElementById('editUserForm');
-            const idInput = document.getElementById('editUserId');
-            const usernameInput = document.getElementById('editUsername');
-            const roleSelect = document.getElementById('editRole');
-
-            form.action = `/admin/users/${userId}`;
-            idInput.value = userId;
-            usernameInput.value = username;
-            roleSelect.value = role;
-
+            
+            document.getElementById('editUserId').value = userId;
+            document.getElementById('editUsername').value = username;
+            document.getElementById('editRole').value = role;
+            form.action = `/admin/users/${userId}/update`;
+            
             modal.classList.remove('hidden');
         }
 

@@ -6,6 +6,7 @@ const { safeStringify } = require('../utils/jsonHelper');
 const he = require('he'); // Import he for encoding
 const requestIp = require('request-ip'); // Add this after existing imports
 const sessionStore = require('sessionstore'); // Add this line to use session store
+const bcrypt = require('bcrypt'); // Add at the top with other imports
 
 // Import all required models
 const Movie = require('../models/movie');
@@ -891,65 +892,8 @@ router.get('/users', isAuthenticated, isAdmin, async (req, res) => {
     }
 });
 
-// Update the users filter route
-router.get('/users/filter', isAuthenticated, isAdmin, async (req, res) => {
-    try {
-        const { search, role, rangeStart, rangeEnd, page = 1, limit = 10 } = req.query;
-        const query = {};
-
-        // Fix search filter for exact username match
-        if (search && search.trim()) {
-            query.username = { $regex: search.trim(), $options: 'i' };
-        }
-
-        // Fix role filter for exact role match
-        if (role && role !== '') {
-            query.role = role;
-        }
-
-        // Fix range filter
-        if (rangeStart && rangeEnd) {
-            const start = parseInt(rangeStart);
-            const end = parseInt(rangeEnd);
-            query._id = {
-                $gte: mongoose.Types.ObjectId.createFromTime(start),
-                $lte: mongoose.Types.ObjectId.createFromTime(end)
-            };
-        }
-
-        const [users, total] = await Promise.all([
-            User.find(query)
-                .select('-password')
-                .sort('-createdAt')
-                .skip((parseInt(page) - 1) * parseInt(limit))
-                .limit(parseInt(limit))
-                .lean(),
-            User.countDocuments(query)
-        ]);
-
-        res.json({
-            success: true,
-            users: users.map(user => ({
-                ...user,
-                _id: user._id.toString(),
-                createdAt: new Date(user.createdAt).toLocaleString()
-            })),
-            pagination: {
-                current: parseInt(page),
-                pages: Math.ceil(total / parseInt(limit)),
-                total,
-                start: ((page - 1) * parseInt(limit)) + 1,
-                end: Math.min(page * parseInt(limit), total)
-            }
-        });
-    } catch (error) {
-        console.error('Users filter error:', error);
-        res.status(500).json({ success: false, error: 'Filter error' });
-    }
-});
-
-// Update the user creation route
-router.post('/users/add', isAuthenticated, isAdmin, async (req, res) => {
+// Separate route for creating new users
+router.post('/users', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const { username, password, role, email, avatar, bio } = req.body;
 
@@ -961,9 +905,11 @@ router.post('/users/add', isAuthenticated, isAdmin, async (req, res) => {
             });
         }
 
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         const user = new User({
             username,
-            password,
+            password: hashedPassword,
             role,
             email,
             avatar,
@@ -979,45 +925,53 @@ router.post('/users/add', isAuthenticated, isAdmin, async (req, res) => {
     }
 });
 
-router.post('/users/:id', isAuthenticated, async (req, res) => {
+// Update user route
+router.post('/users/:id/update', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const { username, password, role } = req.body;
-        const updateData = { username, role };
+        const userId = req.params.id;
 
-        if (password) {
-            updateData.password = password;
-        }
+        // Check if username already exists for a different user
+        const existingUser = await User.findOne({ 
+            username, 
+            _id: { $ne: userId } 
+        });
 
-        if (req.session.user.role === 'Admin') {
-            await User.findByIdAndUpdate(req.params.id, updateData);
-            res.redirect('/admin/users');
-        } else if (req.session.user.role === 'Moderator') {
-            await Request.create({
-                type: 'user_update',
-                data: updateData,
-                targetId: req.params.id,
-                createdBy: req.session.user.id,
-                status: 'Pending'
+        if (existingUser) {
+            return res.status(400).json({
+                success: false,
+                error: 'Username already exists'
             });
-            res.redirect('/admin/users?message=Request submitted for approval');
         }
+
+        // Prepare update data
+        const updateData = { username, role };
+        
+        // Only hash and update password if one was provided
+        if (password) {
+            updateData.password = await bcrypt.hash(password, 10);
+        }
+
+        // Update the user
+        await User.findByIdAndUpdate(userId, updateData);
+        
+        res.redirect('/admin/users');
     } catch (error) {
-        res.status(500).send('Error updating user');
+        console.error('Error updating user:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update user'
+        });
     }
 });
 
+// Delete user route
 router.post('/users/:id/delete', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
-
         if (user.role === 'Admin') {
             return res.status(403).send('Cannot delete admin users');
         }
-
-        await Post.deleteMany({ userId: user._id });
-        await Message.deleteMany({ $or: [{ from: user._id }, { to: user._id }] });
-        await Notification.deleteMany({ $or: [{ recipient: user._id }, { sender: user._id }] });
-
         await User.findByIdAndDelete(req.params.id);
         res.redirect('/admin/users');
     } catch (error) {
@@ -1283,17 +1237,24 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// Setup workspace route
 router.get('/setup-workspace', isAuthenticated, async (req, res) => {
-    const isAdminOrModerator = req.session.user.role === 'Admin' || req.session.user.role === 'Moderator';
-    
-    if (!isAdminOrModerator) {
-        return res.redirect('/profile');
-    }
+    try {
+        const user = req.session.user;
+        if (!user || !['Admin', 'Moderator'].includes(user.role)) {
+            return res.redirect('/login');
+        }
 
-    const redirectUrl = req.session.user.role === 'Admin' ? '/admin/dashboard' : '/moderator/dashboard';
-    // Fetch necessary data asynchronously
-    const data = await fetchDataForWorkspace();
-    res.render('setup-workspace', { redirectUrl, path: '/setup-workspace', data });
+        const redirectUrl = user.role === 'Admin' ? '/admin/dashboard' : '/moderator/dashboard';
+        res.render('setup-workspace', { 
+            user,
+            redirectUrl,
+            title: 'Setting Up Workspace'
+        });
+    } catch (error) {
+        console.error('Setup workspace error:', error);
+        res.redirect('/login');
+    }
 });
 
 // Login attempts live filter endpoint

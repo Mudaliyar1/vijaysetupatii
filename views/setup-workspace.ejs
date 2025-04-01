@@ -260,12 +260,20 @@
                         await checkConnection();
                     }
 
-                    // When complete
+                    // When complete, redirect based on user role
                     if (progress >= 100) {
                         clearInterval(progressInterval);
                         document.getElementById('statusText').textContent = 'Workspace secured and ready!';
+                        
+                        // Get user role from session
+                        const response = await fetch('/auth/user-role');
+                        const { role } = await response.json();
+                        
+                        // Redirect based on role
+                        const redirectUrl = role === 'Admin' ? '/admin/dashboard' : '/moderator/dashboard';
+                        
                         setTimeout(() => {
-                            window.location.replace(finalRedirect);
+                            window.location.replace(redirectUrl);
                         }, 1000);
                     }
                 }, connectionQuality === 'good' ? 100 : connectionQuality === 'medium' ? 150 : 200);

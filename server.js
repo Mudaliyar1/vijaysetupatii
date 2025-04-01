@@ -7,6 +7,7 @@ const path = require('path');
 const methodOverride = require('method-override');
 const requestIp = require('request-ip'); // Add this line
 const { MaintenanceMode } = require('./models'); // Add this import
+const bcrypt = require('bcrypt'); // Add at the top with other imports
 
 const app = express();
 
@@ -38,23 +39,33 @@ const MAINTENANCE_CHECK_INTERVAL = 60000; // Increased to 60 seconds to reduce f
 let maintenanceCheckRunning = false; // Flag to prevent overlapping checks
 
 const performMaintenanceCheck = async () => {
-    // Skip if a check is already running or if MongoDB is not connected
-    if (maintenanceCheckRunning || mongoose.connection.readyState !== 1) {
+    // Skip if a check is already running
+    if (maintenanceCheckRunning) {
+        return;
+    }
+    
+    // Check MongoDB connection state
+    if (mongoose.connection.readyState !== 1) {
+        console.log('Skipping maintenance check - MongoDB not connected');
         return;
     }
     
     maintenanceCheckRunning = true;
     try {
-        // Add timeout to prevent long-running operation
+        // Increased timeout for maintenance check
         const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Maintenance check timed out')), 5000);
+            setTimeout(() => reject(new Error('Maintenance check timed out')), 30000);
         });
         
         const checkPromise = MaintenanceMode.checkAndStopExpired();
         await Promise.race([checkPromise, timeoutPromise]);
+        console.log('Maintenance check completed successfully');
     } catch (error) {
-        console.error('Maintenance auto-stop check error:', error.message);
-        // Don't retry immediately on failure
+        if (error.message.includes('timed out')) {
+            console.error('Maintenance check timed out - will retry on next interval');
+        } else {
+            console.error('Maintenance check error:', error.message);
+        }
     } finally {
         maintenanceCheckRunning = false;
     }
@@ -104,14 +115,19 @@ const connectWithRetry = () => {
     }
     
     mongoose.connect(mongoUri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        serverSelectionTimeoutMS: 30000, // Increase timeout to 30 seconds
-        socketTimeoutMS: 45000, // Socket timeout
-        heartbeatFrequencyMS: 10000, // Heartbeat frequency
-        maxPoolSize: 10, // Maximum connection pool size
-        minPoolSize: 2, // Minimum connection pool size
-        connectTimeoutMS: 30000 // Connection timeout
+        serverSelectionTimeoutMS: 120000, // Increase timeout to 120 seconds
+        socketTimeoutMS: 120000, // Increased socket timeout
+        heartbeatFrequencyMS: 30000, // Increased heartbeat frequency
+        maxPoolSize: 50, // Increased maximum connection pool size
+        minPoolSize: 5, // Increased minimum connection pool size
+        connectTimeoutMS: 120000, // Increased connection timeout
+        bufferCommands: true, // Enable command buffering
+        bufferTimeoutMS: 60000, // Set buffer timeout to 60 seconds
+        retryWrites: true, // Enable retry writes
+        retryReads: true, // Enable retry reads
+        replicaSet: 'atlas-rr2rbw-shard-0', // Add replica set name
+        ssl: true, // Enable SSL for Atlas connections
+        authSource: 'admin' // Specify auth source for Atlas
     })
     .then(() => {
         console.log('MongoDB connected successfully');
@@ -168,20 +184,21 @@ app.get('/admin/setup-workspace', isAuthenticated, (req, res) => {
 app.get('/login', (req, res) => res.render('login'));
 app.post('/login', async (req, res) => {
     try {
-        console.log('Login request body:', req.body); // Add this for debugging
+        console.log('Login attempt:', { username: req.body.username });
         const { username, password } = req.body;
         
-        if (!username || !password) {
-            return res.status(400).json({
-                success: false,
-                error: 'Username and password are required'
-            });
-        }
-
         const User = require('./models/User');
         const user = await User.findOne({ username });
 
-        if (!user || user.password !== password) {
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid username or password'
+            });
+        }
+
+        const isValidPassword = await bcrypt.compare(password, user.password);
+        if (!isValidPassword) {
             return res.status(401).json({
                 success: false,
                 error: 'Invalid username or password'
@@ -194,11 +211,16 @@ app.post('/login', async (req, res) => {
             role: user.role
         };
 
+        // Update redirect URL to go directly to dashboard for admin
+        const redirectUrl = user.role === 'Admin' 
+            ? '/admin/dashboard'
+            : user.role === 'Moderator' 
+                ? '/moderator/dashboard' 
+                : '/profile';
+
         res.json({
             success: true,
-            redirectUrl: user.role === 'Admin' || user.role === 'Moderator' 
-                ? '/admin/dashboard' 
-                : '/profile'
+            redirectUrl
         });
     } catch (error) {
         console.error('Login error:', error);
@@ -214,17 +236,17 @@ app.post('/register', async (req, res) => {
     const { username, password } = req.body;
     const User = require('./models/User');
     try {
-        // Check if user already exists
         const existingUser = await User.findOne({ username });
         if (existingUser) {
             return res.redirect('/register?error=Username already exists');
         }
         
-        // Create new user with 'User' role
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
         const user = new User({ 
             username, 
-            password, 
-            role: 'User' // Set default role to User instead of Moderator
+            password: hashedPassword,
+            role: 'User'
         });
         await user.save();
         res.redirect('/login?success=Registration successful');
@@ -318,3 +340,4 @@ app.post('/admin/requests/:id/reject', isAuthenticated, isAdmin, async (req, res
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+

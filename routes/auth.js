@@ -9,96 +9,58 @@ const bcrypt = require('bcrypt');
 // Update the login route
 router.post('/login', async (req, res) => {
     try {
+        console.log('Login attempt received for username:', req.body.username);
         const { username, password } = req.body;
-        
-        // Test for SQL injection patterns
-        const sqlInjectionPattern = /[;'"\\]|\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|AND|OR)\b/i;
-        if (sqlInjectionPattern.test(username) || sqlInjectionPattern.test(password)) {
-            return res.status(403).json({
-                success: false,
-                error: 'Invalid input detected',
-                securityCheck: 'sqlInjection',
-                passed: false
-            });
-        }
 
-        const [user, maintenance] = await Promise.all([
-            User.findOne({ username }),
-            MaintenanceMode.findOne({ isEnabled: true })
-        ]);
-
-        // Validate database connection
-        if (!user && !maintenance) {
-            const isConnected = mongoose.connection.readyState === 1;
-            if (!isConnected) {
-                return res.status(500).json({
-                    success: false,
-                    error: 'Database connection error',
-                    securityCheck: 'connection',
-                    passed: false
-                });
-            }
-        }
-
-        // Check maintenance mode first
-        if (maintenance?.isEnabled) {
-            // Record login attempt
-            await MaintenanceLoginAttempt.create({
-                username,
-                role: user?.role || 'Unknown',
-                ip: requestIp.getClientIp(req),
-                userAgent: req.headers['user-agent'],
-                success: false,
-                maintenanceId: maintenance._id
-            });
-
-            if (!user || user.role !== 'Admin') {
-                return res.status(403).json({
-                    success: false,
-                    error: 'System is under maintenance. Only administrators can access.',
-                    maintenance: true,
-                    countdown: 5,
-                    redirectUrl: '/maintenance'
-                });
-            }
-        }
-
-        if (!user || !bcrypt.compareSync(password, user.password)) {
+        const user = await User.findOne({ username });
+        if (!user) {
+            console.log('User not found:', username);
             return res.status(401).json({
                 success: false,
                 error: 'Invalid username or password'
             });
         }
 
-        // Set session data
+        // Compare password using bcrypt compare
+        const isMatch = await bcrypt.compare(password, user.password);
+        console.log('Password match result:', isMatch);
+
+        if (!isMatch) {
+            console.log('Password mismatch for user:', username);
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid username or password'
+            });
+        }
+
+        // Set session
         req.session.user = {
             id: user._id,
             username: user.username,
             role: user.role
         };
 
-        // For admin users
-        if (user.role === 'Admin') {
-            return res.json({
+        console.log('Login successful:', { username: user.username, role: user.role });
+
+        // First redirect to setup-workspace for Admin/Moderator
+        if (user.role === 'Admin' || user.role === 'Moderator') {
+            res.json({
                 success: true,
                 redirectUrl: '/setup-workspace'
             });
+        } else {
+            res.json({
+                success: true,
+                redirectUrl: '/profile'
+            });
         }
-
-        res.json({
-            success: true,
-            redirectUrl: '/profile'
-        });
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Server error occurred' 
-        });
+        res.status(500).json({ success: false, error: 'Server error occurred' });
     }
 });
 
-// Disable registration during maintenance
+// Registration endpoint
 router.post('/register', async (req, res) => {
     try {
         const maintenance = await MaintenanceMode.findOne({ isEnabled: true });
@@ -110,7 +72,35 @@ router.post('/register', async (req, res) => {
             });
         }
 
-        // ... rest of registration logic ...
+        const { username, password, role = 'User' } = req.body;
+
+        if (!username || !password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Username and password are required'
+            });
+        }
+
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({
+                success: false,
+                message: 'Username already exists'
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = new User({
+            username,
+            password: hashedPassword,
+            role
+        });
+
+        await user.save();
+        res.status(201).json({
+            success: true,
+            message: 'User created successfully'
+        });
     } catch (error) {
         console.error('Registration error:', error);
         res.status(500).json({
@@ -120,61 +110,17 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// Add ping endpoint for connection testing
-router.get('/ping', (req, res) => {
-    res.json({ success: true, timestamp: Date.now() });
+// Get user role endpoint
+router.get('/user-role', (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+    res.json({ role: req.session.user.role });
 });
 
-// Add maintenance check endpoint with improved error handling
-router.get('/maintenance/status', async (req, res) => {
-    try {
-        // Add timeout to prevent long-running queries
-        const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Maintenance status check timed out')), 5000);
-        });
-        
-        const maintenancePromise = MaintenanceMode.findOne({ isEnabled: true }).exec();
-        
-        try {
-            // Race the database query against the timeout
-            const maintenance = await Promise.race([maintenancePromise, timeoutPromise]);
-            
-            if (maintenance) {
-                try {
-                    await Promise.race([
-                        maintenance.autoStop(),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('Auto-stop timed out')), 3000))
-                    ]);
-                } catch (autoStopError) {
-                    console.error('Maintenance auto-stop error:', autoStopError.message);
-                    // Continue even if auto-stop fails
-                }
-            }
-            
-            res.json({
-                inMaintenance: maintenance?.isEnabled || false,
-                endTime: maintenance?.calculateEndTime() || null,
-                message: maintenance?.message || '',
-                reason: maintenance?.reason || ''
-            });
-        } catch (timeoutError) {
-            console.error('Maintenance status check timed out:', timeoutError.message);
-            // Return a default response if the query times out
-            res.json({
-                inMaintenance: false,
-                endTime: null,
-                message: '',
-                reason: '',
-                error: 'Status check timed out'
-            });
-        }
-    } catch (error) {
-        console.error('Error checking maintenance status:', error);
-        res.status(500).json({ 
-            error: 'Error checking maintenance status',
-            message: error.message
-        });
-    }
+// Connection test endpoint
+router.get('/ping', (req, res) => {
+    res.json({ success: true, timestamp: Date.now() });
 });
 
 module.exports = router;
