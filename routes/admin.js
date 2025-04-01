@@ -892,12 +892,78 @@ router.get('/users', isAuthenticated, isAdmin, async (req, res) => {
     }
 });
 
-// Separate route for creating new users
+// Add this right after the /users GET route
+router.get('/users/filter', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const { search, role, limit = 10, page = 1, startDate, endDate } = req.query;
+        const query = {};
+
+        // Build filter query
+        if (search) {
+            query.username = { $regex: search, $options: 'i' };
+        }
+        if (role && role !== 'all') {
+            query.role = role;
+        }
+        if (startDate && endDate) {
+            query.createdAt = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
+        }
+
+        // Execute query with pagination
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        const [users, total] = await Promise.all([
+            User.find(query)
+                .sort('-createdAt')
+                .skip(skip)
+                .limit(parseInt(limit))
+                .lean(),
+            User.countDocuments(query)
+        ]);
+
+        // Format user data
+        const formattedUsers = users.map(user => ({
+            ...user,
+            _id: user._id.toString(),
+            createdAt: new Date(user.createdAt).toLocaleString(),
+        }));
+
+        res.json({
+            success: true,
+            users: formattedUsers,
+            pagination: {
+                current: parseInt(page),
+                pages: Math.ceil(total / parseInt(limit)),
+                total,
+                start: skip + 1,
+                end: Math.min(skip + users.length, total)
+            }
+        });
+    } catch (error) {
+        console.error('User filter error:', error);
+        res.status(500).json({ success: false, error: 'Failed to filter users' });
+    }
+});
+
+// Update the user creation route
 router.post('/users', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const { username, password, role, email, avatar, bio } = req.body;
+        console.log('Received user data:', req.body); // Debug log
+        const { username, password, role, email, bio } = req.body;
 
-        const existingUser = await User.findOne({ username });
+        // Basic validation
+        if (!username || !password) {
+            console.log('Missing required fields:', { username: !!username, password: !!password }); // Debug log
+            return res.status(400).json({
+                success: false,
+                error: 'Username and password are required'
+            });
+        }
+
+        // Check for existing user
+        const existingUser = await User.findOne({ username: username.trim() });
         if (existingUser) {
             return res.status(400).json({
                 success: false,
@@ -905,62 +971,91 @@ router.post('/users', isAuthenticated, isAdmin, async (req, res) => {
             });
         }
 
+        // Create new user
         const hashedPassword = await bcrypt.hash(password, 10);
-
         const user = new User({
-            username,
+            username: username.trim(),
             password: hashedPassword,
-            role,
-            email,
-            avatar,
-            bio,
+            role: role || 'User',
+            email: email?.trim(),
+            bio: bio?.trim(),
             createdAt: new Date()
         });
 
         await user.save();
-        res.redirect('/admin/users');
+        console.log('User created successfully:', user.username); // Debug log
+
+        res.json({ 
+            success: true, 
+            message: 'User created successfully' 
+        });
     } catch (error) {
         console.error('Error creating user:', error);
-        res.status(500).send('Error creating user');
+        res.status(500).json({
+            success: false,
+            error: 'Failed to create user'
+        });
     }
 });
 
-// Update user route
+// Update the user update route
 router.post('/users/:id/update', isAuthenticated, isAdmin, async (req, res) => {
     try {
+        console.log('Update request received:', { userId: req.params.id, body: req.body }); // Debug log
         const { username, password, role } = req.body;
         const userId = req.params.id;
 
-        // Check if username already exists for a different user
-        const existingUser = await User.findOne({ 
-            username, 
-            _id: { $ne: userId } 
-        });
-
-        if (existingUser) {
-            return res.status(400).json({
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
                 success: false,
-                error: 'Username already exists'
+                error: 'User not found'
             });
         }
 
         // Prepare update data
-        const updateData = { username, role };
+        const updateData = {};
         
-        // Only hash and update password if one was provided
-        if (password) {
-            updateData.password = await bcrypt.hash(password, 10);
+        if (username && username.trim()) {
+            if (username !== user.username) {
+                const existingUser = await User.findOne({ 
+                    username: username.trim(), 
+                    _id: { $ne: userId } 
+                });
+
+                if (existingUser) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Username already exists'
+                    });
+                }
+                updateData.username = username.trim();
+            }
         }
 
-        // Update the user
-        await User.findByIdAndUpdate(userId, updateData);
-        
-        res.redirect('/admin/users');
+        if (role) {
+            updateData.role = role;
+        }
+
+        if (password && password.trim()) {
+            updateData.password = await bcrypt.hash(password.trim(), 10);
+        }
+
+        // Only update if there are changes
+        if (Object.keys(updateData).length > 0) {
+            console.log('Updating user with:', updateData); // Debug log
+            await User.findByIdAndUpdate(userId, updateData);
+        }
+
+        res.json({ 
+            success: true,
+            message: 'User updated successfully'
+        });
     } catch (error) {
         console.error('Error updating user:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to update user'
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to update user' 
         });
     }
 });
@@ -969,13 +1064,26 @@ router.post('/users/:id/update', isAuthenticated, isAdmin, async (req, res) => {
 router.post('/users/:id/delete', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
-        if (user.role === 'Admin') {
-            return res.status(403).send('Cannot delete admin users');
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'User not found' });
         }
+        
+        if (user.role === 'Admin') {
+            return res.status(403).json({ success: false, error: 'Cannot delete admin users' });
+        }
+
         await User.findByIdAndDelete(req.params.id);
+
+        // Check if it's an AJAX request
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.json({ success: true });
+        }
         res.redirect('/admin/users');
     } catch (error) {
         console.error('Error deleting user:', error);
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.status(500).json({ success: false, error: 'Error deleting user' });
+        }
         res.status(500).send('Error deleting user');
     }
 });
