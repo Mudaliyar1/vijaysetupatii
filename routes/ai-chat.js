@@ -302,9 +302,28 @@ router.post('/chat', checkCohereApiKey, checkRateLimit, async (req, res) => {
             return res.status(400).json({ error: 'Message is required' });
         }
 
+        // Get usage stats for the user
+        const usageStats = req.usageStats || {};
+
+        // Get the current time based on the user's timezone (approximated from IP)
+        const userTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }); // Default to Indian time
+
+        // Prepare special instructions for the AI
+        let specialInstructions = `
+        Special instructions:
+        1. If the user asks how many requests they have remaining, tell them:
+           ${user ?
+             `You have used ${usageStats.used || 0} of ${usageStats.max || 8} requests in the current minute. Your limit will reset in ${Math.ceil((usageStats.resetsIn || 60) / 60)} minutes.` :
+             `As a guest, you have used ${usageStats.totalUsed || 0} of your total ${usageStats.maxTotal || 5} allowed requests.`}
+        2. If the user asks who the developer is, say "ftraise59 / vijay is the developer of this AI chat application."
+        3. If the user asks you to speak in Hindi, respond in Hindi.
+        4. If the user asks for the current time, tell them it's ${userTime} (based on their approximate location).
+        5. Always be helpful, concise, and friendly.
+        `;
+
         // Call Cohere API with timeout
         const response = await axios.post(COHERE_API_URL, {
-            prompt: `You are a helpful AI assistant. ${req.user ? `The user's name is ${username}. Address them by name in your response.` : ''} Please respond to: ${message}`,
+            prompt: `You are a helpful AI assistant. ${req.user ? `The user's name is ${username}. Address them by name in your response.` : ''} ${specialInstructions} Please respond to: ${message}`,
             max_tokens: 300,
             temperature: 0.8,
             k: 0,
