@@ -875,7 +875,7 @@
             } finally {
                 currentRequest = null;
                 setLoadingState(false);
-                userInput.focus();
+                // Removed auto-focus to prevent keyboard from popping up after AI response
             }
         }
 
