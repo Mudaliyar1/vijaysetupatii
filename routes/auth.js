@@ -33,27 +33,44 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        // Set session
-        req.session.user = {
-            id: user._id,
+        // Create user object
+        const userInfo = {
+            id: user._id.toString(),
             username: user.username,
             role: user.role
         };
 
-        console.log('Login successful:', { username: user.username, role: user.role });
+        // Set user in session
+        req.session.user = userInfo;
 
-        // First redirect to setup-workspace for Admin/Moderator
-        if (user.role === 'Admin' || user.role === 'Moderator') {
-            res.json({
-                success: true,
-                redirectUrl: '/setup-workspace'
-            });
-        } else {
-            res.json({
-                success: true,
-                redirectUrl: '/profile'
-            });
-        }
+        // Force save the session to ensure it's stored immediately
+        req.session.save(err => {
+            if (err) {
+                console.error('Error saving session:', err);
+                return res.status(500).json({ success: false, message: 'Session save error' });
+            }
+
+            console.log('Login successful:', { username: user.username, role: user.role });
+            console.log('Session after login:', req.session);
+
+            // Check if there's a redirect parameter
+            const redirectUrl = req.body.redirect || '/profile';
+
+            // First redirect to setup-workspace for Admin/Moderator
+            if (user.role === 'Admin' || user.role === 'Moderator') {
+                return res.json({
+                    success: true,
+                    redirectUrl: '/setup-workspace'
+                });
+            } else {
+                return res.json({
+                    success: true,
+                    redirectUrl: redirectUrl
+                });
+            }
+        });
+
+        // Redirect is now handled in the session.save callback
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ success: false, error: 'Server error occurred' });
@@ -64,7 +81,7 @@ router.post('/login', async (req, res) => {
 router.post('/register', async (req, res) => {
     try {
         const maintenance = await MaintenanceMode.findOne({ isEnabled: true });
-        
+
         if (maintenance?.isEnabled) {
             return res.status(503).json({
                 success: false,
@@ -97,9 +114,35 @@ router.post('/register', async (req, res) => {
         });
 
         await user.save();
-        res.status(201).json({
-            success: true,
-            message: 'User created successfully'
+
+        // Create user object
+        const userInfo = {
+            id: user._id.toString(),
+            username: user.username,
+            role: user.role
+        };
+
+        // Set session for auto-login after registration
+        req.session.user = userInfo;
+
+        // Force save the session to ensure it's stored immediately
+        req.session.save(err => {
+            if (err) {
+                console.error('Error saving session:', err);
+                return res.status(500).json({ success: false, message: 'Session save error' });
+            }
+
+            console.log('Registration successful:', { username: user.username, role: user.role });
+            console.log('Session after registration:', req.session);
+
+            // Check if there's a redirect parameter
+            const redirectUrl = req.body.redirect || '/profile';
+
+            res.status(201).json({
+                success: true,
+                message: 'User created successfully',
+                redirectUrl: redirectUrl
+            });
         });
     } catch (error) {
         console.error('Registration error:', error);
@@ -118,9 +161,74 @@ router.get('/user-role', (req, res) => {
     res.json({ role: req.session.user.role });
 });
 
+// Check login status endpoint
+router.get('/check-status', (req, res) => {
+    res.json({
+        isLoggedIn: !!req.session.user,
+        username: req.session.user ? req.session.user.username : null
+    });
+});
+
+// Logout endpoint
+router.get('/logout', (req, res) => {
+    // Clear the cookie
+    res.clearCookie('ai_chat_user');
+
+    // Also destroy the session if it exists
+    if (req.session) {
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('Error destroying session:', err);
+            }
+            console.log('User logged out, cookie and session cleared');
+            res.redirect('/ai-chat');
+        });
+    } else {
+        console.log('User logged out, cookie cleared (no session)');
+        res.redirect('/ai-chat');
+    }
+});
+
 // Connection test endpoint
 router.get('/ping', (req, res) => {
     res.json({ success: true, timestamp: Date.now() });
+});
+
+// Direct login endpoint for testing
+router.get('/direct-login', async (req, res) => {
+    try {
+        // Find a user (for testing purposes)
+        const User = require('../models/User');
+        const user = await User.findOne({});
+
+        if (!user) {
+            return res.status(404).send('No users found. Please register a user first.');
+        }
+
+        // Set session
+        req.session.user = {
+            id: user._id,
+            username: user.username,
+            role: user.role
+        };
+
+        // Force save the session
+        req.session.save(err => {
+            if (err) {
+                console.error('Error saving session:', err);
+                return res.status(500).send('Error saving session');
+            }
+
+            console.log('Direct login successful:', { username: user.username, role: user.role });
+            console.log('Session after direct login:', req.session);
+
+            // Redirect to AI chat
+            res.redirect('/ai-chat');
+        });
+    } catch (error) {
+        console.error('Direct login error:', error);
+        res.status(500).send('Server error occurred');
+    }
 });
 
 module.exports = router;

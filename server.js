@@ -8,6 +8,7 @@ const methodOverride = require('method-override');
 const requestIp = require('request-ip'); // Add this line
 const { MaintenanceMode } = require('./models'); // Add this import
 const bcrypt = require('bcrypt'); // Add at the top with other imports
+const cookieParser = require('cookie-parser'); // Add cookie parser
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
 app.use(bodyParser.json()); // Add this line as backup
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser()); // Add cookie parser middleware
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 
@@ -27,13 +29,11 @@ const responseHelper = require('./middleware/responseHelper');
 // Add response helpers (single instance)
 app.use(responseHelper);
 
+// This middleware will be moved after session setup
+
 // Add security routes
 const securityRoutes = require('./routes/security');
 app.use('/security', securityRoutes);
-
-// Add AI chat routes
-const aiChatRoutes = require('./routes/ai-chat');
-app.use('/ai-chat', aiChatRoutes);
 
 // Add maintenance check middleware
 app.use(maintenanceCheck);
@@ -47,20 +47,20 @@ const performMaintenanceCheck = async () => {
     if (maintenanceCheckRunning) {
         return;
     }
-    
+
     // Check MongoDB connection state
     if (mongoose.connection.readyState !== 1) {
         console.log('Skipping maintenance check - MongoDB not connected');
         return;
     }
-    
+
     maintenanceCheckRunning = true;
     try {
         // Increased timeout for maintenance check
         const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => reject(new Error('Maintenance check timed out')), 30000);
         });
-        
+
         const checkPromise = MaintenanceMode.checkAndStopExpired();
         await Promise.race([checkPromise, timeoutPromise]);
         console.log('Maintenance check completed successfully');
@@ -86,14 +86,39 @@ const sessionstore = require('sessionstore');
 app.use(session({
     store: sessionstore.createSessionStore(),
     secret: process.env.SESSION_SECRET || 'your-secret-key',
-    resave: false,
-    saveUninitialized: false,
+    resave: true, // Changed to true to ensure session is saved on each request
+    saveUninitialized: true, // Changed to true to ensure new sessions are saved
     cookie: {
-        secure: process.env.NODE_ENV === 'production' ? true : false,
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        secure: false, // Set to false for development
+        sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
 }));
+
+// Debug middleware to log session data
+app.use((req, res, next) => {
+    console.log('Session Debug - Session ID:', req.sessionID);
+    console.log('Session Debug - Session Data:', req.session);
+    next();
+});
+
+// Middleware to make session user available as req.user and res.locals.user
+app.use((req, res, next) => {
+    if (req.session && req.session.user) {
+        req.user = req.session.user;
+        // Also set a local variable for views
+        res.locals.user = req.user;
+        console.log('User middleware - Setting req.user and res.locals.user:', req.user);
+    } else {
+        console.log('User middleware - No user in session');
+        res.locals.user = null;
+    }
+    next();
+});
+
+// Add AI chat routes after session middleware
+const aiChatRoutes = require('./routes/ai-chat');
+app.use('/ai-chat', aiChatRoutes);
 
 // Trust proxy - required for secure cookies to work behind a proxy like Render
 app.set('trust proxy', 1);
@@ -107,7 +132,7 @@ app.set('trust proxy', 1);
 // MongoDB connection with improved error handling and retry logic
 const connectWithRetry = () => {
     console.log('MongoDB connection attempt...');
-    
+
     // Check if MONGO_URI is defined
     const mongoUri = process.env.MONGO_URI;
     if (!mongoUri) {
@@ -117,7 +142,7 @@ const connectWithRetry = () => {
         setTimeout(connectWithRetry, 10000);
         return;
     }
-    
+
     mongoose.connect(mongoUri, {
         serverSelectionTimeoutMS: 120000, // Increase timeout to 120 seconds
         socketTimeoutMS: 120000, // Increased socket timeout
@@ -140,7 +165,7 @@ const connectWithRetry = () => {
             console.error('MongoDB connection error:', err);
             setTimeout(connectWithRetry, 5000);
         });
-        
+
         mongoose.connection.on('disconnected', () => {
             console.log('MongoDB disconnected, attempting to reconnect...');
             setTimeout(connectWithRetry, 5000);
@@ -190,7 +215,7 @@ app.post('/login', async (req, res) => {
     try {
         console.log('Login attempt:', { username: req.body.username });
         const { username, password } = req.body;
-        
+
         const User = require('./models/User');
         const user = await User.findOne({ username });
 
@@ -216,10 +241,10 @@ app.post('/login', async (req, res) => {
         };
 
         // Update redirect URL to go directly to dashboard for admin
-        const redirectUrl = user.role === 'Admin' 
+        const redirectUrl = user.role === 'Admin'
             ? '/admin/dashboard'
-            : user.role === 'Moderator' 
-                ? '/moderator/dashboard' 
+            : user.role === 'Moderator'
+                ? '/moderator/dashboard'
                 : '/profile';
 
         res.json({
@@ -244,11 +269,11 @@ app.post('/register', async (req, res) => {
         if (existingUser) {
             return res.redirect('/register?error=Username already exists');
         }
-        
+
         const hashedPassword = await bcrypt.hash(password, 10);
-        
-        const user = new User({ 
-            username, 
+
+        const user = new User({
+            username,
             password: hashedPassword,
             role: 'User'
         });
@@ -269,17 +294,34 @@ app.use('/auth', require('./routes/auth'));
 app.use('/admin', require('./routes/admin'));
 app.use('/moderator', require('./routes/moderator'));
 
+// Add logout route
+app.get('/logout', (req, res) => {
+    // Destroy the session if it exists
+    if (req.session) {
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('Error destroying session:', err);
+            }
+            console.log('User logged out, session cleared');
+            res.redirect('/ai-chat');
+        });
+    } else {
+        console.log('User logged out (no session)');
+        res.redirect('/ai-chat');
+    }
+});
+
 // Setup workspace route
 app.get('/setup-workspace', isAuthenticated, (req, res) => {
     const isAdminOrMod = req.session.user.role === 'Admin' || req.session.user.role === 'Moderator';
     if (!isAdminOrMod) {
         return res.redirect('/profile');
     }
-    
+
     const redirectUrl = req.session.user.role === 'Admin' ? '/admin/dashboard' : '/moderator/dashboard';
-    res.render('setup-workspace', { 
+    res.render('setup-workspace', {
         user: req.session.user,  // Pass user data to template
-        redirectUrl 
+        redirectUrl
     });
 });
 

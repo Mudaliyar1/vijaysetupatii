@@ -2,24 +2,90 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 
+// In-memory chat history storage (in a real app, this would be in a database)
+const chatHistory = new Map();
+
 const COHERE_API_KEY = process.env.COHERE_API_KEY;
 const COHERE_API_URL = 'https://api.cohere.ai/v1/generate';
 
 // Rate limiting configuration
 const userRateLimits = new Map();
+const guestTotalRequests = new Map(); // Track total requests for guests
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 10;
+const MAX_REQUESTS_PER_WINDOW_LOGGED = 8; // 8 requests per minute for logged users
+const MAX_TOTAL_REQUESTS_GUEST = 5; // 5 requests total for guests
 
 // Middleware to check rate limits
 const checkRateLimit = (req, res, next) => {
-    const userId = req.user ? req.user.id : req.ip;
+    // Get user from req.user (set by middleware in server.js)
+    const user = req.user;
+
+    const isGuest = !user;
+    const userId = user ? user.id : req.ip;
     const now = Date.now();
-    
+
+    console.log(`Rate limit check for ${isGuest ? 'guest' : 'user'} ${userId}`);
+
+    // Handle guest users (total limit of 5 requests)
+    if (isGuest) {
+        if (!guestTotalRequests.has(userId)) {
+            guestTotalRequests.set(userId, 1);
+        } else {
+            const totalRequests = guestTotalRequests.get(userId);
+
+            if (totalRequests >= MAX_TOTAL_REQUESTS_GUEST) {
+                return res.status(429).json({
+                    error: 'You have reached the limit of 5 requests for guest users. Please login or register to continue using the AI chat.',
+                    type: 'guest_quota_exceeded',
+                    isGuest: true,
+                    totalUsed: totalRequests,
+                    maxTotal: MAX_TOTAL_REQUESTS_GUEST
+                });
+            }
+
+            guestTotalRequests.set(userId, totalRequests + 1);
+        }
+
+        // Also track rate limiting for guests
+        if (!userRateLimits.has(userId)) {
+            userRateLimits.set(userId, {
+                count: 1,
+                windowStart: now
+            });
+        } else {
+            const userLimit = userRateLimits.get(userId);
+            if (now - userLimit.windowStart > RATE_LIMIT_WINDOW) {
+                userLimit.count = 1;
+                userLimit.windowStart = now;
+            } else {
+                userLimit.count++;
+            }
+        }
+
+        // Return guest usage stats
+        req.usageStats = {
+            isGuest: true,
+            totalUsed: guestTotalRequests.get(userId),
+            maxTotal: MAX_TOTAL_REQUESTS_GUEST
+        };
+
+        return next();
+    }
+
+    // Handle logged-in users (8 requests per minute)
     if (!userRateLimits.has(userId)) {
         userRateLimits.set(userId, {
             count: 1,
             windowStart: now
         });
+
+        req.usageStats = {
+            isGuest: false,
+            used: 1,
+            max: MAX_REQUESTS_PER_WINDOW_LOGGED,
+            resetsIn: RATE_LIMIT_WINDOW
+        };
+
         return next();
     }
 
@@ -27,28 +93,93 @@ const checkRateLimit = (req, res, next) => {
     if (now - userLimit.windowStart > RATE_LIMIT_WINDOW) {
         userLimit.count = 1;
         userLimit.windowStart = now;
+
+        req.usageStats = {
+            isGuest: false,
+            used: 1,
+            max: MAX_REQUESTS_PER_WINDOW_LOGGED,
+            resetsIn: RATE_LIMIT_WINDOW
+        };
+
         return next();
     }
 
-    if (userLimit.count >= MAX_REQUESTS_PER_WINDOW) {
+    if (userLimit.count >= MAX_REQUESTS_PER_WINDOW_LOGGED) {
         const retryAfter = Math.ceil((userLimit.windowStart + RATE_LIMIT_WINDOW - now) / 1000);
         return res.status(429).json({
-            error: 'You have exceeded the rate limit. Please try again later.',
+            error: `You have reached the limit of ${MAX_REQUESTS_PER_WINDOW_LOGGED} requests per minute. Please wait ${retryAfter} seconds before trying again.`,
             type: 'quota_exceeded',
-            retryAfter
+            isGuest: false,
+            used: userLimit.count,
+            max: MAX_REQUESTS_PER_WINDOW_LOGGED,
+            retryAfter,
+            resetsIn: retryAfter
         });
     }
 
     userLimit.count++;
+
+    req.usageStats = {
+        isGuest: false,
+        used: userLimit.count,
+        max: MAX_REQUESTS_PER_WINDOW_LOGGED,
+        resetsIn: Math.ceil((userLimit.windowStart + RATE_LIMIT_WINDOW - now) / 1000)
+    };
+
     next();
 };
 
 // Route to render chat page
 router.get('/', (req, res) => {
+    // Get user from req.user (set by middleware in server.js)
+    // res.locals.user is already set by middleware
+    const user = req.user;
+    console.log('AI Chat Route - User from req.user:', user);
+
+    // Get chat history for this user
+    const userId = user ? user.id : req.ip;
+    const userHistory = chatHistory.get(userId) || [];
+
+    // Render the chat page
     res.render('ai-chat', {
-        user: req.user || null,
-        isAdmin: false
+        user: user, // Pass the user to the view
+        isAdmin: user && user.role === 'Admin',
+        chatHistory: userHistory
     });
+});
+
+
+
+// Logout route
+router.get('/logout', (req, res) => {
+    // Clear the cookie
+    res.clearCookie('ai_chat_user');
+
+    // Also destroy the session if it exists
+    if (req.session) {
+        req.session.destroy();
+    }
+
+    // Redirect back to chat
+    res.redirect('/ai-chat');
+});
+
+
+
+
+
+// Route to get chat history
+router.get('/history', (req, res) => {
+    const userId = req.user ? req.user.id : req.ip;
+    const userHistory = chatHistory.get(userId) || [];
+    res.json({ history: userHistory });
+});
+
+// Route to delete chat history
+router.delete('/history', (req, res) => {
+    const userId = req.user ? req.user.id : req.ip;
+    chatHistory.delete(userId);
+    res.json({ success: true, message: 'Chat history deleted successfully' });
 });
 
 // Middleware to check if API key is configured
@@ -63,15 +194,21 @@ const checkCohereApiKey = (req, res, next) => {
 router.post('/chat', checkCohereApiKey, checkRateLimit, async (req, res) => {
     try {
         const { message } = req.body;
-        const username = req.user ? req.user.username : 'Guest';
-        
+
+        // Get user from req.user (set by middleware in server.js)
+        const user = req.user;
+        const userId = user ? user.id : req.ip;
+        const username = user ? user.username : 'Guest';
+
+        console.log('Chat endpoint - Using user:', user);
+
         if (!message) {
             return res.status(400).json({ error: 'Message is required' });
         }
 
         // Call Cohere API
         const response = await axios.post(COHERE_API_URL, {
-            prompt: `You are a helpful AI assistant. Please respond to: ${message}`,
+            prompt: `You are a helpful AI assistant. ${req.user ? `The user's name is ${username}. Address them by name in your response.` : ''} Please respond to: ${message}`,
             max_tokens: 300,
             temperature: 0.8,
             k: 0,
@@ -93,10 +230,36 @@ router.post('/chat', checkCohereApiKey, checkRateLimit, async (req, res) => {
             throw new Error('Invalid response format from Cohere API');
         }
         const aiResponse = data.generations[0].text.trim();
-        res.json({ message: aiResponse });
+
+        // Store in chat history
+        if (!chatHistory.has(userId)) {
+            chatHistory.set(userId, []);
+        }
+
+        const timestamp = new Date().toISOString();
+        const historyEntry = {
+            id: Date.now().toString(),
+            userMessage: message,
+            aiResponse: aiResponse,
+            timestamp: timestamp
+        };
+
+        const userHistory = chatHistory.get(userId);
+        userHistory.push(historyEntry);
+
+        // Limit history size (optional)
+        if (userHistory.length > 50) {
+            userHistory.shift(); // Remove oldest entry if more than 50
+        }
+
+        res.json({
+            message: aiResponse,
+            usageStats: req.usageStats,
+            historyId: historyEntry.id
+        });
     } catch (error) {
         console.error('Error in chat endpoint:', error);
-        
+
         // Handle rate limit, quota errors and API errors
         if (error.response?.status === 404) {
             console.error('Cohere API endpoint not found. Please check the API configuration:', error.config?.url);
@@ -118,7 +281,7 @@ router.post('/chat', checkCohereApiKey, checkRateLimit, async (req, res) => {
                 type: 'service_error'
             });
         }
-        
+
         // Handle other API errors
         const status = error.status || 500;
         res.status(status).json({
