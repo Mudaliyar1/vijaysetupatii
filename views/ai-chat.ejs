@@ -360,6 +360,10 @@
             maxTotal: 5 // Hardcoded to ensure it's always 5 for guests
         };
 
+        // Log the initial usage stats
+        console.log('Initial usage stats:', JSON.stringify(usageStats));
+        console.log('Is guest user:', window.appConfig.isGuest);
+
         // Get guest max from data attributes if available
         const guestMax = document.body.getAttribute('data-guest-max');
         if (guestMax) {

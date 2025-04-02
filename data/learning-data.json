@@ -2033,14 +2033,105 @@
       "userId": "67ecbf1cd48591b9591276fe",
       "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
       "responseTime": 4176
+    },
+    {
+      "userMessage": "hello",
+      "aiResponse": "Hello! How can I assist you today?  I am a chatbot designed to assist users in English, Hindi, and Tamil. I can provide responses in the same language as the user's input and maintain a friendly, helpful, and efficient tone. \n\nIf you have any questions or need assistance with any topics, feel free to ask, and I'll do my best to help you!",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T18:57:09.583Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 3996
+    },
+    {
+      "userMessage": "nice day",
+      "aiResponse": "Nice day to you too! I'm here to assist you with any questions or discussions you have in mind. If you'd like information or answers about any topic, feel free to ask, and I'll do my best to help you out!",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T18:58:32.890Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 2839
+    },
+    {
+      "userMessage": "hi",
+      "aiResponse": "Hello! I'm a multilingual AI chatbot trained to assist users in English, Hindi, and Tamil. I provide responses in the same language as the user's input, and I maintain a friendly, helpful, and efficient tone. So, feel free to ask any questions or let me know if there's anything you'd like assistance with, and I'll do my best to provide you with helpful responses! \n\nLet me know if you have any specific questions or if there's anything else I can help you with.",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T19:08:48.157Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 5887
+    },
+    {
+      "userMessage": "dd",
+      "aiResponse": "Hello! I'm here to help in any way I can, so feel free to ask any questions or let me know if there's anything you'd like assistance with. I'm trained to provide helpful responses in English, Hindi, or Tamil, depending on your preference. Let me know if there's anything specific I can assist you with, and I'll do my best to help out!",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T19:08:57.171Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 3800
+    },
+    {
+      "userMessage": "k",
+      "aiResponse": "Vijay, the AI-assistant chatbot created by ftraise59, is designed to provide helpful responses in a friendly and efficient manner in English, Hindi, or Tamil. Please state your question or provide any information needed as I'm here to help.",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T19:09:06.686Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 2850
+    },
+    {
+      "userMessage": "You have reached the limit of 5 requests for guest users. Please login or register to continue using the AI chat. As a guest user, you are limited to 5 requests total.  You have used 5 of 5 requests.  Create an account to get 8 requests per 2 minutes!",
+      "aiResponse": "Sorry, but I'm unable to help you with this particular request. I'm a chatbot designed to assist users by providing helpful responses in a friendly and efficient manner in English, Hindi, or Tamil. If you have any questions or need assistance with any topics, please let me know. \n\nAdditionally, I'm programmed to handle a wide range of queries and requests, so feel free to ask about any topics you'd like assistance with! Let me know if you have any specific questions or if there's anything else I can help you with.",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T19:09:31.208Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 9397
+    },
+    {
+      "userMessage": "You have reached the limit of 5 requests for guest users. Please login or register to continue using the AI chat. As a guest user, you are limited to 5 requests total.  You have used 5 of 5 requests.  Create an account to get 8 requests per 2 minutes!",
+      "aiResponse": "I'm sorry, but I cannot provide the specific information regarding the number of requests remaining or restrictions on guest users. I am a chatbot designed to assist users by providing helpful responses in a friendly and efficient manner. If you have any questions or need assistance with any topics, please let me know, and I will be happy to help. Feel free to ask about any other topics that you'd like assistance with!",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T19:09:39.695Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 3822
     }
   ],
   "languages": {
     "hinglish": 21,
-    "english": 171
+    "english": 178
   },
   "topics": {
-    "general": 122,
+    "general": 129,
     "programming": 4
   },
   "frequentQueries": {
@@ -2340,8 +2431,8 @@
       ]
     },
     "hello": {
-      "count": 2,
-      "lastSeen": "2025-04-02T18:31:39.798Z",
+      "count": 3,
+      "lastSeen": "2025-04-02T18:57:09.583Z",
       "examples": [
         {
           "query": "hello",
@@ -2352,6 +2443,11 @@
           "query": "hello",
           "response": "Hello! I'm here to help you in English, and I'm excited to assist you with any questions or discussions you'd like to engage in. Feel free to ask me anything, and let's explore ideas and knowledge together! \n\nIf there is a specific topic or information you'd like to explore, please let me know, and I'll do my best to provide you with meaningful insights and answers. Let's get started!",
           "timestamp": "2025-04-02T18:31:39.798Z"
+        },
+        {
+          "query": "hello",
+          "response": "Hello! How can I assist you today?  I am a chatbot designed to assist users in English, Hindi, and Tamil. I can provide responses in the same language as the user's input and maintain a friendly, helpful, and efficient tone. \n\nIf you have any questions or need assistance with any topics, feel free to ask, and I'll do my best to help you!",
+          "timestamp": "2025-04-02T18:57:09.583Z"
         }
       ]
     },
@@ -2502,24 +2598,51 @@
           "timestamp": "2025-04-02T18:55:05.204Z"
         }
       ]
+    },
+    "nice day": {
+      "count": 1,
+      "lastSeen": "2025-04-02T18:58:32.890Z",
+      "examples": [
+        {
+          "query": "nice day",
+          "response": "Nice day to you too! I'm here to assist you with any questions or discussions you have in mind. If you'd like information or answers about any topic, feel free to ask, and I'll do my best to help you out!",
+          "timestamp": "2025-04-02T18:58:32.890Z"
+        }
+      ]
+    },
+    "you have reached the limit of 5 requests for guest": {
+      "count": 2,
+      "lastSeen": "2025-04-02T19:09:39.695Z",
+      "examples": [
+        {
+          "query": "You have reached the limit of 5 requests for guest users. Please login or register to continue using the AI chat. As a guest user, you are limited to 5 requests total.  You have used 5 of 5 requests.  Create an account to get 8 requests per 2 minutes!",
+          "response": "Sorry, but I'm unable to help you with this particular request. I'm a chatbot designed to assist users by providing helpful responses in a friendly and efficient manner in English, Hindi, or Tamil. If you have any questions or need assistance with any topics, please let me know. \n\nAdditionally, I'm programmed to handle a wide range of queries and requests, so feel free to ask about any topics you'd like assistance with! Let me know if you have any specific questions or if there's anything else I can help you with.",
+          "timestamp": "2025-04-02T19:09:31.208Z"
+        },
+        {
+          "query": "You have reached the limit of 5 requests for guest users. Please login or register to continue using the AI chat. As a guest user, you are limited to 5 requests total.  You have used 5 of 5 requests.  Create an account to get 8 requests per 2 minutes!",
+          "response": "I'm sorry, but I cannot provide the specific information regarding the number of requests remaining or restrictions on guest users. I am a chatbot designed to assist users by providing helpful responses in a friendly and efficient manner. If you have any questions or need assistance with any topics, please let me know, and I will be happy to help. Feel free to ask about any other topics that you'd like assistance with!",
+          "timestamp": "2025-04-02T19:09:39.695Z"
+        }
+      ]
     }
   },
   "userPatterns": {
     "67ecbf1cd48591b9591276fe": {
       "languages": {
-        "english": 120,
+        "english": 127,
         "hinglish": 1
       },
       "topics": {
-        "general": 117,
+        "general": 124,
         "programming": 4
       },
       "queryTypes": {
-        "statement": 107,
+        "statement": 114,
         "question": 14
       },
-      "interactions": 121,
-      "lastSeen": "2025-04-02T18:55:17.666Z"
+      "interactions": 128,
+      "lastSeen": "2025-04-02T19:09:39.695Z"
     },
     "67ed8346e62dce30515b4483": {
       "languages": {

@@ -1,48 +1,6 @@
 {
   "chat_user_67ecbf1cd48591b9591276fe": [
     {
-      "id": "1743616794562",
-      "userMessage": "t",
-      "aiResponse": "I'm sorry, I am unable to understand the context of your previous responses 'ji' and 't', and therefore unable to generate an accurate response to \"t\". Could you please provide a complete sentence or a clear question, and I will gladly assist you accordingly?",
-      "timestamp": "2025-04-02T17:59:54.562Z"
-    },
-    {
-      "id": "1743616794621",
-      "userMessage": "t",
-      "aiResponse": "I'm sorry, I'm not sure what you are asking for. Could you please clarify your question or prompt so I can assist you accurately? I understand you may have an inquiry or a topic you'd like to discuss, and I'm here to provide you with assistance to the best of my abilities.",
-      "timestamp": "2025-04-02T17:59:54.621Z"
-    },
-    {
-      "id": "1743616798891",
-      "userMessage": "t",
-      "aiResponse": "I'm sorry, I'm not sure what you are asking for. Could you please clarify your question or prompt so I can assist you accurately? I'm here to help you with anything you need.",
-      "timestamp": "2025-04-02T17:59:58.891Z"
-    },
-    {
-      "id": "1743616798931",
-      "userMessage": "t",
-      "aiResponse": "My apologies for the confusion in our previous exchanges. I want to let you know that I've been trained to respond in the same language as the user's input. It seems like you're trying to communicate in Hindi. To switch to Hindi, you can begin your messages with \"है नमस्ते\" or \"Hello\" in English, and I'll respond in Hindi accordingly. \n\nLet me know if you'd like to proceed in Hindi or switch to a different language.",
-      "timestamp": "2025-04-02T17:59:58.931Z"
-    },
-    {
-      "id": "1743616801447",
-      "userMessage": "t",
-      "aiResponse": "I'm sorry, I'm not sure what you are asking for. Could you please clarify your question or prompt so I can assist you accurately? I understand you may have an inquiry or a topic you'd like to discuss, and I'm here to provide you with assistance to the best of my abilities.",
-      "timestamp": "2025-04-02T18:00:01.447Z"
-    },
-    {
-      "id": "1743616996426",
-      "userMessage": "hi",
-      "aiResponse": "है नमस्ते! अगर यह समय था, तो मुझे आशा था, तब भाइ, आप मुझे यह सब सांगाब साझे थे जब मुझे यह बताना था, कि अभी तक यह प्रश्न उन सभी लोगों से है जो अभी तक अभी नहीं यह सोच पाए हैं, \"क्या हो सकता है मैं यह सब सांगाब साझ सकता हूँ?\" क्या आप वास्तव में यह चाहते हैं? \nअगर यह चाहते",
-      "timestamp": "2025-04-02T18:03:16.426Z"
-    },
-    {
-      "id": "1743617647111",
-      "userMessage": "hi",
-      "aiResponse": "है नमस्ते! कि सोच-अभिष्ट होूँ या अभी यह सोच रखना चाहते हैं?",
-      "timestamp": "2025-04-02T18:14:07.111Z"
-    },
-    {
       "id": "1743617672647",
       "userMessage": "hi",
       "aiResponse": "है नमस्ते! अगर यह समय था, तो मुझे आशा था, तब भाइ, आप मुझे यह सब सांगाब साझे थे जब मुझे यह बताना था, कि अभी तक यह प्रश्न उन सभी लोगों से है जो अभी तक अभी नहीं यह सोच पाए हैं, \"क्या हो सकता है मैं यह सब सांगाब साझ सकता हूँ?\" क्या आप वास्तव में यह चाहते हैं? \nअगर यह चाहते",
@@ -299,6 +257,48 @@
       "userMessage": "hi",
       "aiResponse": "Hello! I'm a multilingual AI chatbot trained to assist users in English, Hindi, and Tamil. I provide responses in the same language as the user's input, and I maintain a friendly, helpful, and efficient tone. So, feel free to ask any questions or let me know if there's anything you'd like assistance with, and I'll do my best to provide you with helpful responses!",
       "timestamp": "2025-04-02T18:55:17.666Z"
+    },
+    {
+      "id": "1743620229583",
+      "userMessage": "hello",
+      "aiResponse": "Hello! How can I assist you today?  I am a chatbot designed to assist users in English, Hindi, and Tamil. I can provide responses in the same language as the user's input and maintain a friendly, helpful, and efficient tone. \n\nIf you have any questions or need assistance with any topics, feel free to ask, and I'll do my best to help you!",
+      "timestamp": "2025-04-02T18:57:09.583Z"
+    },
+    {
+      "id": "1743620312890",
+      "userMessage": "nice day",
+      "aiResponse": "Nice day to you too! I'm here to assist you with any questions or discussions you have in mind. If you'd like information or answers about any topic, feel free to ask, and I'll do my best to help you out!",
+      "timestamp": "2025-04-02T18:58:32.890Z"
+    },
+    {
+      "id": "1743620928157",
+      "userMessage": "hi",
+      "aiResponse": "Hello! I'm a multilingual AI chatbot trained to assist users in English, Hindi, and Tamil. I provide responses in the same language as the user's input, and I maintain a friendly, helpful, and efficient tone. So, feel free to ask any questions or let me know if there's anything you'd like assistance with, and I'll do my best to provide you with helpful responses! \n\nLet me know if you have any specific questions or if there's anything else I can help you with.",
+      "timestamp": "2025-04-02T19:08:48.157Z"
+    },
+    {
+      "id": "1743620937171",
+      "userMessage": "dd",
+      "aiResponse": "Hello! I'm here to help in any way I can, so feel free to ask any questions or let me know if there's anything you'd like assistance with. I'm trained to provide helpful responses in English, Hindi, or Tamil, depending on your preference. Let me know if there's anything specific I can assist you with, and I'll do my best to help out!",
+      "timestamp": "2025-04-02T19:08:57.171Z"
+    },
+    {
+      "id": "1743620946686",
+      "userMessage": "k",
+      "aiResponse": "Vijay, the AI-assistant chatbot created by ftraise59, is designed to provide helpful responses in a friendly and efficient manner in English, Hindi, or Tamil. Please state your question or provide any information needed as I'm here to help.",
+      "timestamp": "2025-04-02T19:09:06.686Z"
+    },
+    {
+      "id": "1743620971208",
+      "userMessage": "You have reached the limit of 5 requests for guest users. Please login or register to continue using the AI chat. As a guest user, you are limited to 5 requests total.  You have used 5 of 5 requests.  Create an account to get 8 requests per 2 minutes!",
+      "aiResponse": "Sorry, but I'm unable to help you with this particular request. I'm a chatbot designed to assist users by providing helpful responses in a friendly and efficient manner in English, Hindi, or Tamil. If you have any questions or need assistance with any topics, please let me know. \n\nAdditionally, I'm programmed to handle a wide range of queries and requests, so feel free to ask about any topics you'd like assistance with! Let me know if you have any specific questions or if there's anything else I can help you with.",
+      "timestamp": "2025-04-02T19:09:31.208Z"
+    },
+    {
+      "id": "1743620979695",
+      "userMessage": "You have reached the limit of 5 requests for guest users. Please login or register to continue using the AI chat. As a guest user, you are limited to 5 requests total.  You have used 5 of 5 requests.  Create an account to get 8 requests per 2 minutes!",
+      "aiResponse": "I'm sorry, but I cannot provide the specific information regarding the number of requests remaining or restrictions on guest users. I am a chatbot designed to assist users by providing helpful responses in a friendly and efficient manner. If you have any questions or need assistance with any topics, please let me know, and I will be happy to help. Feel free to ask about any other topics that you'd like assistance with!",
+      "timestamp": "2025-04-02T19:09:39.695Z"
     }
   ],
   "chat_user_67ed8346e62dce30515b4483": [

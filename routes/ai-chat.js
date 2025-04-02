@@ -157,6 +157,7 @@ const getChatHistoryIdentifier = (req) => {
     // and not accessible to guests or other users
 
     // For guests, use a unique identifier based on their session ID
+    // We're not using the cookie for authentication anymore
     // This ensures each guest has their own private history
     {
         // For guests, use their session ID to ensure privacy
@@ -261,28 +262,14 @@ const checkRateLimit = (req, res, next) => {
         console.log('Guest user detected in rate limit check');
     }
 
-    // Check for ai_chat_user cookie first
-    if (req.cookies && req.cookies.ai_chat_user && isGuest) {
-        console.log('Found ai_chat_user cookie:', req.cookies.ai_chat_user);
-        try {
-            const cookieUser = JSON.parse(req.cookies.ai_chat_user);
-            console.log('Parsed cookie user:', cookieUser);
-
-            // If we have a valid user cookie but no session user, use the cookie
-            if (cookieUser && cookieUser.id) {
-                console.log('Using cookie user instead of session user');
-                req.user = cookieUser;
-                isGuest = false;
-            }
-        } catch (e) {
-            console.error('Error parsing ai_chat_user cookie:', e);
-        }
-    }
+    // We're not using the cookie for authentication anymore
+    // This ensures that only properly logged-in users with valid sessions
+    // are treated as logged-in users
+    // The cookie is only used for chat history persistence
 
     // Use different identifiers for guests and logged-in users
-    // Get the user again in case it was updated from the cookie
-    const user2 = req.user;
-    const userId = isGuest ? getUserIdentifier(req) : `user_${user2.id}`;
+    // We're using the original user object from the session
+    const userId = isGuest ? getUserIdentifier(req) : `user_${user.id}`;
 
     console.log(`Rate limit check for ${isGuest ? 'guest' : 'user'} ${userId}`);
 
@@ -496,9 +483,9 @@ router.get('/logout', (req, res) => {
         saveChatHistory();
     }
 
-    // We're not clearing the ai_chat_user cookie to preserve history association
-    // This allows users to see their history even after logout
-    // res.clearCookie('ai_chat_user');
+    // Clear the ai_chat_user cookie to prevent any confusion
+    // This ensures that logged-out users are properly treated as guests
+    res.clearCookie('ai_chat_user');
 
     // Clear the user from the session
     if (req.session) {
