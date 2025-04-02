@@ -81,13 +81,12 @@ mongoose.connection.once('connected', () => {
     setInterval(performMaintenanceCheck, MAINTENANCE_CHECK_INTERVAL);
 });
 
-// Session setup with sessionstore
-const sessionstore = require('sessionstore');
+// Session setup with express-session
 app.use(session({
-    store: sessionstore.createSessionStore(),
+    // Use default memory store for simplicity and performance
     secret: process.env.SESSION_SECRET || 'your-secret-key',
-    resave: true, // Changed to true to ensure session is saved on each request
-    saveUninitialized: true, // Changed to true to ensure new sessions are saved
+    resave: false, // Changed to false for better performance
+    saveUninitialized: false, // Changed to false for better performance
     cookie: {
         secure: false, // Set to false for development
         sameSite: 'lax',
@@ -95,22 +94,38 @@ app.use(session({
     }
 }));
 
-// Debug middleware to log session data
+// Debug middleware to log session data (only in development)
 app.use((req, res, next) => {
-    console.log('Session Debug - Session ID:', req.sessionID);
-    console.log('Session Debug - Session Data:', req.session);
+    // Only log for important routes to reduce console spam
+    const importantRoutes = ['/auth/login', '/auth/register', '/ai-chat', '/logout'];
+    if (importantRoutes.some(route => req.url.includes(route))) {
+        console.log('Session Debug - Session ID:', req.sessionID);
+        console.log('Session Debug - Session Data:', req.session);
+    }
     next();
 });
 
 // Middleware to make session user available as req.user and res.locals.user
 app.use((req, res, next) => {
     if (req.session && req.session.user) {
-        req.user = req.session.user;
-        // Also set a local variable for views
-        res.locals.user = req.user;
-        console.log('User middleware - Setting req.user and res.locals.user:', req.user);
+        // Only set if not already set to avoid unnecessary operations
+        if (!req.user) {
+            req.user = req.session.user;
+            // Also set a local variable for views
+            res.locals.user = req.user;
+
+            // Only log for important routes
+            const importantRoutes = ['/auth/login', '/auth/register', '/ai-chat', '/logout'];
+            if (importantRoutes.some(route => req.url.includes(route))) {
+                console.log('User middleware - Setting req.user and res.locals.user:', req.user);
+            }
+        }
     } else {
-        console.log('User middleware - No user in session');
+        // Only log for important routes
+        const importantRoutes = ['/auth/login', '/auth/register', '/ai-chat', '/logout'];
+        if (importantRoutes.some(route => req.url.includes(route))) {
+            console.log('User middleware - No user in session');
+        }
         res.locals.user = null;
     }
     next();

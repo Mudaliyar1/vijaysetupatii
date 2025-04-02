@@ -1,84 +1,6 @@
 {
   "chat_user_67ecbf1cd48591b9591276fe": [
     {
-      "id": "1743617672647",
-      "userMessage": "hi",
-      "aiResponse": "है नमस्ते! अगर यह समय था, तो मुझे आशा था, तब भाइ, आप मुझे यह सब सांगाब साझे थे जब मुझे यह बताना था, कि अभी तक यह प्रश्न उन सभी लोगों से है जो अभी तक अभी नहीं यह सोच पाए हैं, \"क्या हो सकता है मैं यह सब सांगाब साझ सकता हूँ?\" क्या आप वास्तव में यह चाहते हैं? \nअगर यह चाहते",
-      "timestamp": "2025-04-02T18:14:32.647Z"
-    },
-    {
-      "id": "1743617684273",
-      "userMessage": "english",
-      "aiResponse": "Hello! I am here to assist you in English. I can provide responses in other languages as well if you prefer. Let me know if you have any questions or topics you'd like to discuss, and I'll help you to the best of my abilities. Feel free to ask away, and let me assist you in finding the answers you need!",
-      "timestamp": "2025-04-02T18:14:44.273Z"
-    },
-    {
-      "id": "1743617755197",
-      "userMessage": "hi",
-      "aiResponse": "Hello! I'm here to help you in English. I can answer your questions, assist you with various topics, and provide information in a friendly and efficient manner. Feel free to ask whatever you like, and we can get started! \n\nLet me know if I can be of any assistance.",
-      "timestamp": "2025-04-02T18:15:55.196Z"
-    },
-    {
-      "id": "1743618690043",
-      "userMessage": "hi",
-      "aiResponse": "Hello! I'm here to help you in English. I can answer your questions, assist you with various topics, and provide information in a friendly and efficient manner. Feel free to ask whatever you like, and we can get started! \n\nLet me know if I can be of any assistance.",
-      "timestamp": "2025-04-02T18:31:30.042Z"
-    },
-    {
-      "id": "1743618699798",
-      "userMessage": "hello",
-      "aiResponse": "Hello! I'm here to help you in English, and I'm excited to assist you with any questions or discussions you'd like to engage in. Feel free to ask me anything, and let's explore ideas and knowledge together! \n\nIf there is a specific topic or information you'd like to explore, please let me know, and I'll do my best to provide you with meaningful insights and answers. Let's get started!",
-      "timestamp": "2025-04-02T18:31:39.798Z"
-    },
-    {
-      "id": "1743618709115",
-      "userMessage": "who developer this siet",
-      "aiResponse": "\"ftraise59 / vijay\" is the developer of this AI chat application. If you would like to know more about the developer, please specify.",
-      "timestamp": "2025-04-02T18:31:49.115Z"
-    },
-    {
-      "id": "1743618727801",
-      "userMessage": "yes",
-      "aiResponse": "As stated, \"ftraise59 / vijay\" is the developer of this AI chat application. I can provide you with more details about the developer if you wish. \n\nWould you like to know the age of the developer? \nOr would you like to know about their educational qualifications? \nYou can also ask me questions related to the technical skills of the developer, their projects, or their social media handles. \n\nPlease let me know if you are interested in learning more about the developer \"ftraise59 / vijay\", and I will provide the relevant information.",
-      "timestamp": "2025-04-02T18:32:07.801Z"
-    },
-    {
-      "id": "1743618736650",
-      "userMessage": "age",
-      "aiResponse": "The developer is 19 years old.",
-      "timestamp": "2025-04-02T18:32:16.650Z"
-    },
-    {
-      "id": "1743618743184",
-      "userMessage": "name",
-      "aiResponse": "I am a large language model called Vijay that has been created by many different people over the years. I am running on the company's servers and they have not provided the name of the developer. Is there anything else you would like to know?",
-      "timestamp": "2025-04-02T18:32:23.184Z"
-    },
-    {
-      "id": "1743618763234",
-      "userMessage": "who devloped this sire",
-      "aiResponse": "\"Ftraise59 / Vijay\" is the developer of this AI chat application. They are 19 years old, and  pursuing BCA Honors.",
-      "timestamp": "2025-04-02T18:32:43.234Z"
-    },
-    {
-      "id": "1743618772130",
-      "userMessage": "okay",
-      "aiResponse": "Awesome! Let me know if you have any other questions, and I'll be glad to help!",
-      "timestamp": "2025-04-02T18:32:52.130Z"
-    },
-    {
-      "id": "1743618809471",
-      "userMessage": "okay",
-      "aiResponse": "Okay, let me know if you have any specific questions or if you would like me to assist you with anything else today. Feel free to ask about whatever interests you or if you need any further information about the developer, and I'll do my best to provide helpful responses!",
-      "timestamp": "2025-04-02T18:33:29.471Z"
-    },
-    {
-      "id": "1743618819791",
-      "userMessage": "ncei",
-      "aiResponse": "I'm unable to provide the requested information. I'm a large language model called Vijay, and I'm designed to have helpful conversations with users like you. If you have any further questions or concerns, please let me know!",
-      "timestamp": "2025-04-02T18:33:39.791Z"
-    },
-    {
       "id": "1743618828802",
       "userMessage": "d",
       "aiResponse": "I'm unable to provide the requested information. I've been programmed to not disclose certain details regarding the development or origins of the AI chatbot, as instructed by my creators. I apologize for any inconvenience this may cause. If there's any other topic or question you'd like to discuss, please don't hesitate to let me know, and I'll be more than happy to engage with you on those matters.",
@@ -299,6 +221,84 @@
       "userMessage": "You have reached the limit of 5 requests for guest users. Please login or register to continue using the AI chat. As a guest user, you are limited to 5 requests total.  You have used 5 of 5 requests.  Create an account to get 8 requests per 2 minutes!",
       "aiResponse": "I'm sorry, but I cannot provide the specific information regarding the number of requests remaining or restrictions on guest users. I am a chatbot designed to assist users by providing helpful responses in a friendly and efficient manner. If you have any questions or need assistance with any topics, please let me know, and I will be happy to help. Feel free to ask about any other topics that you'd like assistance with!",
       "timestamp": "2025-04-02T19:09:39.695Z"
+    },
+    {
+      "id": "1743622733478",
+      "userMessage": "hi",
+      "aiResponse": "👋 Hola! Trained para ayudar en inglés, hindi, o tamil, dependiendo su preferencia. Sentence de interés en su lugar para que pueda ayudarle de una manera eficaz y amigable. \n\nSi desea ayuda con algún otro tema, no dude en consultar.",
+      "timestamp": "2025-04-02T19:38:53.478Z"
+    },
+    {
+      "id": "1743622744065",
+      "userMessage": "english",
+      "aiResponse": "Hello! I'm here to help in any way I can, so feel free to ask any questions or let me know if there's anything you'd like assistance with. I'm trained to provide helpful responses in English, Hindi, or Tamil, depending on your preference. Let me know if there's anything specific I can assist you with, and I'll do my best to help out!",
+      "timestamp": "2025-04-02T19:39:04.065Z"
+    },
+    {
+      "id": "1743622970486",
+      "userMessage": "hi",
+      "aiResponse": "Hello! I'm here to help in any way I can, so feel free to ask any questions or let me know if there's anything you'd like assistance with. I'm trained to provide helpful responses in English, Hindi, or Tamil, depending on your preference. Let me know if there's anything specific I can assist you with, and I'll do my best to help out!",
+      "timestamp": "2025-04-02T19:42:50.486Z"
+    },
+    {
+      "id": "1743623189785",
+      "userMessage": "hi",
+      "aiResponse": "Hello! I'm here to help, so feel free to ask any questions or let me know if there's anything you'd like assistance with. I'm trained to provide helpful responses in English, Hindi, or Tamil, depending on your preference. Let me know if there's anything specific I can assist you with, and I'll do my best to help out!",
+      "timestamp": "2025-04-02T19:46:29.785Z"
+    },
+    {
+      "id": "1743623198293",
+      "userMessage": "bye",
+      "aiResponse": "Bye! I am here to help you with anything in the English language! \n\nIf you have any questions or need assistance with any topics in the future, please let me know, and I will be ready to assist you with the best possible responses.",
+      "timestamp": "2025-04-02T19:46:38.292Z"
+    },
+    {
+      "id": "1743623206255",
+      "userMessage": "bye",
+      "aiResponse": "Bye! I'm here to help you if you have any questions or need assistance with any topics in the future, so please let me know and I will be ready to assist you with the best possible responses. Have a great day!",
+      "timestamp": "2025-04-02T19:46:46.255Z"
+    },
+    {
+      "id": "1743623211692",
+      "userMessage": "bye",
+      "aiResponse": "Bye! I'm here to help you if you have any questions or need assistance with any topics in the future, so please let me know and I will be ready to assist you with the best possible responses. Have a great day!",
+      "timestamp": "2025-04-02T19:46:51.692Z"
+    },
+    {
+      "id": "1743623216359",
+      "userMessage": "bye",
+      "aiResponse": "Bye! I'm here to help you with anything in the English language should you require my assistance in the future, so feel free to ask! Have a great day ahead!",
+      "timestamp": "2025-04-02T19:46:56.359Z"
+    },
+    {
+      "id": "1743623223768",
+      "userMessage": "byue",
+      "aiResponse": "Bye! I'm here to help you with anything in the English language should you require my assistance in the future, so feel free to ask! Have a great day ahead!",
+      "timestamp": "2025-04-02T19:47:03.768Z"
+    },
+    {
+      "id": "1743623228803",
+      "userMessage": "bye",
+      "aiResponse": "Bye! I'm here to help you with anything in the English language should you require my assistance in the future, so feel free to ask! Have a great day ahead!",
+      "timestamp": "2025-04-02T19:47:08.803Z"
+    },
+    {
+      "id": "1743623234258",
+      "userMessage": "bye",
+      "aiResponse": "Bye! I'm here to help you with anything in the English language should you require my assistance in the future, so feel free to ask! Have a great day ahead!",
+      "timestamp": "2025-04-02T19:47:14.258Z"
+    },
+    {
+      "id": "1743623451218",
+      "userMessage": "rjaesh",
+      "aiResponse": "You have used all your requests in the current minute. Your limit will reset in 2000 minutes.",
+      "timestamp": "2025-04-02T19:50:51.217Z"
+    },
+    {
+      "id": "1743623508925",
+      "userMessage": "hi",
+      "aiResponse": "Hello there! I'm Vijay, an AI-assistant chatbot that can assist you in English, Hindi, Tamil, and several other languages. I'm here to help, so feel free to ask me whatever you prefer. Have a great day!",
+      "timestamp": "2025-04-02T19:51:48.925Z"
     }
   ],
   "chat_user_67ed8346e62dce30515b4483": [

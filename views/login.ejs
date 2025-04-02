@@ -156,7 +156,19 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    window.location.href = data.redirectUrl;
+                    // Show loading indicator
+                    const loginBtn = document.getElementById('loginBtn');
+                    const buttonText = document.getElementById('buttonText');
+                    const loadingSpinner = document.getElementById('loadingSpinner');
+
+                    if (loginBtn) loginBtn.disabled = true;
+                    if (buttonText) buttonText.textContent = 'Redirecting...';
+                    if (loadingSpinner) loadingSpinner.classList.remove('hidden');
+
+                    // Use a small timeout to ensure the session is properly set
+                    setTimeout(() => {
+                        window.location.href = data.redirectUrl;
+                    }, 100);
                 } else if (data.maintenance) {
                     showMaintenanceError(data);
                 } else {
@@ -168,22 +180,42 @@
         });
 
         function showMaintenanceError(data) {
+            // Create error message element
             const errorDiv = document.createElement('div');
             errorDiv.className = 'bg-red-500/20 text-red-400 p-4 rounded-lg mb-4';
             errorDiv.innerHTML = `
                 <p class="font-bold mb-2">Access Denied - System Under Maintenance</p>
-                <p class="mb-2">${data.error}</p>
-                <p class="countdown">Redirecting to maintenance page in <span id="countdown">${data.countdown}</span> seconds...</p>
+                <p class="mb-2">${data.error || 'System is currently under maintenance'}</p>
+                <p class="countdown">Redirecting to maintenance page in <span id="countdown">${data.countdown || 5}</span> seconds...</p>
             `;
 
+            // Get the form safely
             const form = document.getElementById('loginForm');
+            if (!form) {
+                console.error('Login form not found');
+                return;
+            }
+
+            // Remove any existing error messages
             const existingError = form.querySelector('.bg-red-500\\/20');
             if (existingError) {
                 existingError.remove();
             }
+
+            // Add the new error message
             form.insertBefore(errorDiv, form.firstChild);
 
-            let count = data.countdown;
+            // Reset the login button
+            const loginBtn = document.getElementById('loginBtn');
+            const buttonText = document.getElementById('buttonText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+
+            if (loginBtn) loginBtn.disabled = true;
+            if (buttonText) buttonText.textContent = 'Maintenance Mode';
+            if (loadingSpinner) loadingSpinner.classList.add('hidden');
+
+            // Set up countdown
+            let count = data.countdown || 5;
             const countdownElement = document.getElementById('countdown');
             const interval = setInterval(() => {
                 count--;
@@ -192,22 +224,41 @@
                 }
                 if (count <= 0) {
                     clearInterval(interval);
-                    window.location.href = data.redirectUrl;
+                    window.location.href = data.redirectUrl || '/maintenance';
                 }
             }, 1000);
         }
 
         function showError(message) {
+            // Create error message element
             const errorDiv = document.createElement('div');
             errorDiv.className = 'bg-red-500/20 text-red-400 p-4 rounded-lg mb-4';
             errorDiv.textContent = message;
 
+            // Get the form safely
             const form = document.getElementById('loginForm');
+            if (!form) {
+                console.error('Login form not found');
+                return;
+            }
+
+            // Remove any existing error messages
             const existingError = form.querySelector('.bg-red-500\\/20');
             if (existingError) {
                 existingError.remove();
             }
+
+            // Add the new error message
             form.insertBefore(errorDiv, form.firstChild);
+
+            // Reset the login button
+            const loginBtn = document.getElementById('loginBtn');
+            const buttonText = document.getElementById('buttonText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+
+            if (loginBtn) loginBtn.disabled = false;
+            if (buttonText) buttonText.textContent = 'Login';
+            if (loadingSpinner) loadingSpinner.classList.add('hidden');
         }
     </script>
 </body>

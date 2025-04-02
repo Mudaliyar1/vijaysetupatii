@@ -441,9 +441,13 @@ router.get('/', (req, res) => {
 
     // Get chat history for this user using the more specific identifier
     const chatId = getChatHistoryIdentifier(req);
-    const userHistory = chatHistory.get(chatId) || [];
 
-    console.log(`Loading chat history for ${chatId}, found ${userHistory.length} entries`);
+    // Only load chat history if needed (improves performance)
+    let userHistory = [];
+    if (chatHistory.has(chatId)) {
+        userHistory = chatHistory.get(chatId);
+        console.log(`Loading chat history for ${chatId}, found ${userHistory.length} entries`);
+    }
 
     // Get guest usage stats if applicable
     let guestStats = null;
@@ -452,7 +456,9 @@ router.get('/', (req, res) => {
         const guestUsed = guestRequests[userId] ? guestRequests[userId].count : 0;
         guestStats = {
             totalUsed: guestUsed,
-            maxTotal: MAX_GUEST_REQUESTS
+            maxTotal: MAX_GUEST_REQUESTS,
+            used: guestUsed, // Add this for consistency
+            max: MAX_GUEST_REQUESTS // Add this for consistency
         };
         console.log('Guest stats for', userId, ':', guestStats);
 
@@ -490,11 +496,18 @@ router.get('/logout', (req, res) => {
     // Clear the user from the session
     if (req.session) {
         console.log('User logged out, session cleared');
-        req.session.destroy();
+        // Use callback to ensure session is destroyed before redirect
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('Error destroying session:', err);
+            }
+            // Redirect back to chat with cache-busting parameter
+            res.redirect('/ai-chat?t=' + Date.now());
+        });
+    } else {
+        // Redirect back to chat with cache-busting parameter
+        res.redirect('/ai-chat?t=' + Date.now());
     }
-
-    // Redirect back to chat
-    res.redirect('/ai-chat');
 });
 
 

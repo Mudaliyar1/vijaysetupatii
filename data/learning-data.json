@@ -2124,14 +2124,183 @@
       "userId": "67ecbf1cd48591b9591276fe",
       "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
       "responseTime": 3822
+    },
+    {
+      "userMessage": "hi",
+      "aiResponse": "👋 Hola! Trained para ayudar en inglés, hindi, o tamil, dependiendo su preferencia. Sentence de interés en su lugar para que pueda ayudarle de una manera eficaz y amigable. \n\nSi desea ayuda con algún otro tema, no dude en consultar.",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T19:38:53.478Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 8638
+    },
+    {
+      "userMessage": "english",
+      "aiResponse": "Hello! I'm here to help in any way I can, so feel free to ask any questions or let me know if there's anything you'd like assistance with. I'm trained to provide helpful responses in English, Hindi, or Tamil, depending on your preference. Let me know if there's anything specific I can assist you with, and I'll do my best to help out!",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T19:39:04.065Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 3902
+    },
+    {
+      "userMessage": "hi",
+      "aiResponse": "Hello! I'm here to help in any way I can, so feel free to ask any questions or let me know if there's anything you'd like assistance with. I'm trained to provide helpful responses in English, Hindi, or Tamil, depending on your preference. Let me know if there's anything specific I can assist you with, and I'll do my best to help out!",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T19:42:50.486Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 8583
+    },
+    {
+      "userMessage": "hi",
+      "aiResponse": "Hello! I'm here to help, so feel free to ask any questions or let me know if there's anything you'd like assistance with. I'm trained to provide helpful responses in English, Hindi, or Tamil, depending on your preference. Let me know if there's anything specific I can assist you with, and I'll do my best to help out!",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T19:46:29.785Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 5193
+    },
+    {
+      "userMessage": "bye",
+      "aiResponse": "Bye! I am here to help you with anything in the English language! \n\nIf you have any questions or need assistance with any topics in the future, please let me know, and I will be ready to assist you with the best possible responses.",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T19:46:38.292Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 2999
+    },
+    {
+      "userMessage": "bye",
+      "aiResponse": "Bye! I'm here to help you if you have any questions or need assistance with any topics in the future, so please let me know and I will be ready to assist you with the best possible responses. Have a great day!",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T19:46:46.255Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 2681
+    },
+    {
+      "userMessage": "bye",
+      "aiResponse": "Bye! I'm here to help you if you have any questions or need assistance with any topics in the future, so please let me know and I will be ready to assist you with the best possible responses. Have a great day!",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T19:46:51.692Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 2524
+    },
+    {
+      "userMessage": "bye",
+      "aiResponse": "Bye! I'm here to help you with anything in the English language should you require my assistance in the future, so feel free to ask! Have a great day ahead!",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T19:46:56.359Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 2250
+    },
+    {
+      "userMessage": "byue",
+      "aiResponse": "Bye! I'm here to help you with anything in the English language should you require my assistance in the future, so feel free to ask! Have a great day ahead!",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T19:47:03.768Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 4996
+    },
+    {
+      "userMessage": "bye",
+      "aiResponse": "Bye! I'm here to help you with anything in the English language should you require my assistance in the future, so feel free to ask! Have a great day ahead!",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T19:47:08.803Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 2701
+    },
+    {
+      "userMessage": "bye",
+      "aiResponse": "Bye! I'm here to help you with anything in the English language should you require my assistance in the future, so feel free to ask! Have a great day ahead!",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T19:47:14.258Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 2116
+    },
+    {
+      "userMessage": "rjaesh",
+      "aiResponse": "You have used all your requests in the current minute. Your limit will reset in 2000 minutes.",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T19:50:51.217Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 2346
+    },
+    {
+      "userMessage": "hi",
+      "aiResponse": "Hello there! I'm Vijay, an AI-assistant chatbot that can assist you in English, Hindi, Tamil, and several other languages. I'm here to help, so feel free to ask me whatever you prefer. Have a great day!",
+      "language": "english",
+      "topics": [
+        "general"
+      ],
+      "queryType": "statement",
+      "timestamp": "2025-04-02T19:51:48.925Z",
+      "userId": "67ecbf1cd48591b9591276fe",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+      "responseTime": 2894
     }
   ],
   "languages": {
     "hinglish": 21,
-    "english": 178
+    "english": 191
   },
   "topics": {
-    "general": 129,
+    "general": 142,
     "programming": 4
   },
   "frequentQueries": {
@@ -2452,13 +2621,18 @@
       ]
     },
     "english": {
-      "count": 1,
-      "lastSeen": "2025-04-02T18:14:44.273Z",
+      "count": 2,
+      "lastSeen": "2025-04-02T19:39:04.065Z",
       "examples": [
         {
           "query": "english",
           "response": "Hello! I am here to assist you in English. I can provide responses in other languages as well if you prefer. Let me know if you have any questions or topics you'd like to discuss, and I'll help you to the best of my abilities. Feel free to ask away, and let me assist you in finding the answers you need!",
           "timestamp": "2025-04-02T18:14:44.273Z"
+        },
+        {
+          "query": "english",
+          "response": "Hello! I'm here to help in any way I can, so feel free to ask any questions or let me know if there's anything you'd like assistance with. I'm trained to provide helpful responses in English, Hindi, or Tamil, depending on your preference. Let me know if there's anything specific I can assist you with, and I'll do my best to help out!",
+          "timestamp": "2025-04-02T19:39:04.065Z"
         }
       ]
     },
@@ -2625,24 +2799,46 @@
           "timestamp": "2025-04-02T19:09:39.695Z"
         }
       ]
+    },
+    "byue": {
+      "count": 1,
+      "lastSeen": "2025-04-02T19:47:03.768Z",
+      "examples": [
+        {
+          "query": "byue",
+          "response": "Bye! I'm here to help you with anything in the English language should you require my assistance in the future, so feel free to ask! Have a great day ahead!",
+          "timestamp": "2025-04-02T19:47:03.768Z"
+        }
+      ]
+    },
+    "rjaesh": {
+      "count": 1,
+      "lastSeen": "2025-04-02T19:50:51.217Z",
+      "examples": [
+        {
+          "query": "rjaesh",
+          "response": "You have used all your requests in the current minute. Your limit will reset in 2000 minutes.",
+          "timestamp": "2025-04-02T19:50:51.217Z"
+        }
+      ]
     }
   },
   "userPatterns": {
     "67ecbf1cd48591b9591276fe": {
       "languages": {
-        "english": 127,
+        "english": 140,
         "hinglish": 1
       },
       "topics": {
-        "general": 124,
+        "general": 137,
         "programming": 4
       },
       "queryTypes": {
-        "statement": 114,
+        "statement": 127,
         "question": 14
       },
-      "interactions": 128,
-      "lastSeen": "2025-04-02T19:09:39.695Z"
+      "interactions": 141,
+      "lastSeen": "2025-04-02T19:51:48.925Z"
     },
     "67ed8346e62dce30515b4483": {
       "languages": {
