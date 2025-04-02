@@ -14,7 +14,26 @@ const getUserIdentifier = (req) => {
     } else {
         // For guests, use ONLY the IP address to ensure persistence across page refreshes
         // Get the real IP address, considering potential proxies
-        const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip || '0.0.0.0';
+        let ip = req.headers['x-forwarded-for'] ||
+                 req.headers['x-real-ip'] ||
+                 req.connection.remoteAddress ||
+                 req.socket.remoteAddress ||
+                 req.ip ||
+                 '0.0.0.0';
+
+        // If the IP is IPv6 format with IPv4 embedded (like ::ffff:127.0.0.1), extract the IPv4 part
+        if (ip.includes('::ffff:')) {
+            ip = ip.split('::ffff:')[1];
+        }
+
+        // If it's a comma-separated list (from proxies), take the first one (client IP)
+        if (ip.includes(',')) {
+            ip = ip.split(',')[0].trim();
+        }
+
+        console.log('Identified guest with IP:', ip);
+
+        // Use a more stable identifier that won't change with page refreshes
         return `guest_${ip}`;
     }
 };
@@ -26,7 +45,24 @@ const getChatHistoryIdentifier = (req) => {
         return `chat_user_${req.user.id}`;
     } else {
         // For guests, use a combination of IP and user agent hash for privacy
-        const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip || '0.0.0.0';
+        // Get the real IP address, considering potential proxies (same logic as getUserIdentifier)
+        let ip = req.headers['x-forwarded-for'] ||
+                 req.headers['x-real-ip'] ||
+                 req.connection.remoteAddress ||
+                 req.socket.remoteAddress ||
+                 req.ip ||
+                 '0.0.0.0';
+
+        // If the IP is IPv6 format with IPv4 embedded (like ::ffff:127.0.0.1), extract the IPv4 part
+        if (ip.includes('::ffff:')) {
+            ip = ip.split('::ffff:')[1];
+        }
+
+        // If it's a comma-separated list (from proxies), take the first one (client IP)
+        if (ip.includes(',')) {
+            ip = ip.split(',')[0].trim();
+        }
+
         const userAgent = req.headers['user-agent'] || 'unknown';
 
         // Create a simple hash of the user agent to add to the identifier
@@ -70,14 +106,26 @@ try {
     guestRequests = {};
 }
 
-// Save guest requests to file
+// Save guest requests to file with immediate flush to ensure persistence
 const saveGuestRequests = () => {
     try {
+        // Use synchronous write to ensure it completes before the response is sent
         fs.writeFileSync(guestRequestsFile, JSON.stringify(guestRequests), 'utf8');
+
+        // For extra safety, verify the file was written correctly
+        const verifyData = fs.readFileSync(guestRequestsFile, 'utf8');
+        const verifyObj = JSON.parse(verifyData);
+        console.log('Verified guest requests saved successfully:', Object.keys(verifyObj).length);
     } catch (error) {
         console.error('Error saving guest requests file:', error);
     }
 };
+
+// Set up an interval to periodically save guest requests (backup)
+setInterval(() => {
+    console.log('Performing scheduled backup of guest requests...');
+    saveGuestRequests();
+}, 60000); // Every minute
 
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const MAX_REQUESTS_PER_WINDOW_LOGGED = 8; // 8 requests per minute for logged users
@@ -96,8 +144,8 @@ const checkRateLimit = (req, res, next) => {
 
     // Handle guest users (total limit of 5 requests)
     if (isGuest) {
-        // We're already using a more specific userId from getUserIdentifier
-        // which includes IP and user agent hash
+        // We're using a more specific userId from getUserIdentifier
+        // which is based on the real IP address
 
         // Clean up old guest entries (older than 30 days) to prevent the file from growing too large
         const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
@@ -108,27 +156,44 @@ const checkRateLimit = (req, res, next) => {
             }
         }
 
+        // Log all headers for debugging in production
+        console.log('Request headers:', JSON.stringify(req.headers));
+
         if (!guestRequests[userId]) {
+            // New guest user
             guestRequests[userId] = {
                 count: 1,
                 firstSeen: now,
                 lastSeen: now,
-                fingerprint: req.headers['user-agent'] || 'unknown' // Store full user agent for debugging
+                fingerprint: req.headers['user-agent'] || 'unknown', // Store full user agent for debugging
+                headers: { // Store key headers for debugging
+                    'x-forwarded-for': req.headers['x-forwarded-for'] || 'none',
+                    'x-real-ip': req.headers['x-real-ip'] || 'none',
+                    'user-agent': req.headers['user-agent'] || 'none'
+                }
             };
             // Save to file after updating
             saveGuestRequests();
             console.log(`New guest user: ${userId}, count: 1`);
         } else {
+            // Existing guest user
             const guestData = guestRequests[userId];
             const totalRequests = guestData.count;
 
-            // Update last seen timestamp
+            // Update last seen timestamp and headers
             guestData.lastSeen = now;
+            guestData.headers = { // Update headers for debugging
+                'x-forwarded-for': req.headers['x-forwarded-for'] || 'none',
+                'x-real-ip': req.headers['x-real-ip'] || 'none',
+                'user-agent': req.headers['user-agent'] || 'none'
+            };
 
             console.log(`Existing guest user: ${userId}, count: ${totalRequests}`);
 
             if (totalRequests >= MAX_TOTAL_REQUESTS_GUEST) {
                 console.log(`Guest ${userId} exceeded limit: ${totalRequests}/${MAX_TOTAL_REQUESTS_GUEST}`);
+                // Save before returning response
+                saveGuestRequests();
                 return res.status(429).json({
                     error: 'You have reached the limit of 5 requests for guest users. Please login or register to continue using the AI chat.',
                     type: 'guest_quota_exceeded',
@@ -138,7 +203,7 @@ const checkRateLimit = (req, res, next) => {
                 });
             }
 
-            // Increment count and save
+            // Increment count and save immediately
             guestData.count++;
             saveGuestRequests();
             console.log(`Updated guest user: ${userId}, new count: ${guestData.count}`);
@@ -337,10 +402,28 @@ router.post('/chat', checkCohereApiKey, checkRateLimit, async (req, res) => {
            ${user ?
              `You have used ${usageStats.used || 0} of ${usageStats.max || 8} requests in the current minute. Your limit will reset in ${Math.ceil((usageStats.resetsIn || 60) / 60)} minutes.` :
              `As a guest, you have used ${usageStats.totalUsed || 0} of your total ${usageStats.maxTotal || 5} allowed requests.`}
-        2. If the user asks who the developer is, say "ftraise59 / vijay is the developer of this AI chat application."
-        3. If the user asks you to speak in Hindi, respond in Hindi.
-        4. If the user asks for the current time, tell them it's ${userTime} (based on their approximate location).
-        5. Always be helpful, concise, and friendly.
+
+        2. If the user asks who the developer is or who created this site/chatbot, just say "ftraise59 / vijay is the developer of this AI chat application." Then ask if they want to know more about the developer.
+
+        3. If the user asks for more information about ftraise59/vijay or says yes to your offer of more information, don't provide all information at once. Instead, start with a brief introduction like: "Vijay is currently pursuing BCA Honors and is a passionate web developer." Then ask if they'd like to know more about his skills or projects.
+
+           If they ask for more details about skills, say: "Vijay specializes in building applications with modern technologies like EJS, Tailwind CSS, Node.js, Express, and MongoDB."
+
+           If they ask about projects or experience, say: "Vijay focuses on creating responsive web applications with features like live filtering, role-based dashboards, and seamless user experiences."
+
+           Only provide more comprehensive details if the user specifically asks for more information after these initial responses.
+
+        4. If the user asks for social media or contact information for ftraise59/vijay, provide these links (make them clickable):
+           - Instagram: https://www.instagram.com/ft_raise_59?utm_source=qr&igsh=MWF0azFxdmhkOW94ag==
+           - GitHub: https://github.com/Mudaliyar1/
+
+        5. If the user asks what site they are on or about the current website, tell them they are on https://vijaysetupatii-1.onrender.com/
+
+        6. If the user speaks in any language other than English, respond in that same language.
+
+        7. If the user asks for the current time, tell them it's ${userTime} (based on their approximate location).
+
+        8. Always be helpful, concise, and friendly.
         `;
 
         // Call Cohere API with timeout
