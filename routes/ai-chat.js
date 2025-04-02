@@ -3,7 +3,29 @@ const router = express.Router();
 const axios = require('axios');
 
 // In-memory chat history storage (in a real app, this would be in a database)
+// We'll use a more secure approach to ensure privacy between different users
 const chatHistory = new Map();
+
+// Helper function to generate a unique user identifier that's more specific than just IP
+const getUserIdentifier = (req) => {
+    if (req.user) {
+        // For logged-in users, use their user ID
+        return `user_${req.user.id}`;
+    } else {
+        // For guests, use a combination of IP and user agent hash
+        const ip = req.ip;
+        const userAgent = req.headers['user-agent'] || 'unknown';
+
+        // Create a simple hash of the user agent to add to the identifier
+        let userAgentHash = 0;
+        for (let i = 0; i < userAgent.length; i++) {
+            userAgentHash = ((userAgentHash << 5) - userAgentHash) + userAgent.charCodeAt(i);
+            userAgentHash |= 0; // Convert to 32bit integer
+        }
+
+        return `guest_${ip}_${userAgentHash}`;
+    }
+};
 
 const COHERE_API_KEY = process.env.COHERE_API_KEY;
 const COHERE_API_URL = 'https://api.cohere.ai/v1/generate';
@@ -54,34 +76,46 @@ const checkRateLimit = (req, res, next) => {
     const user = req.user;
 
     const isGuest = !user;
-    const userId = user ? user.id : req.ip;
+    const userId = getUserIdentifier(req);
     const now = Date.now();
 
     console.log(`Rate limit check for ${isGuest ? 'guest' : 'user'} ${userId}`);
 
     // Handle guest users (total limit of 5 requests)
     if (isGuest) {
-        // Use IP address for tracking guest requests
-        // For better tracking, we also store the user agent
-        const userAgent = req.headers['user-agent'] || 'unknown';
-        const guestKey = `${userId}|${userAgent}`;
+        // We're already using a more specific userId from getUserIdentifier
+        // which includes IP and user agent hash
 
-        if (!guestRequests[guestKey]) {
-            guestRequests[guestKey] = {
+        // Clean up old guest entries (older than 30 days) to prevent the file from growing too large
+        const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
+        for (const key in guestRequests) {
+            if (guestRequests[key].lastSeen < thirtyDaysAgo) {
+                delete guestRequests[key];
+                console.log(`Cleaned up old guest entry: ${key}`);
+            }
+        }
+
+        if (!guestRequests[userId]) {
+            guestRequests[userId] = {
                 count: 1,
                 firstSeen: now,
-                lastSeen: now
+                lastSeen: now,
+                fingerprint: req.headers['user-agent'] || 'unknown' // Store full user agent for debugging
             };
             // Save to file after updating
             saveGuestRequests();
+            console.log(`New guest user: ${userId}, count: 1`);
         } else {
-            const guestData = guestRequests[guestKey];
+            const guestData = guestRequests[userId];
             const totalRequests = guestData.count;
 
             // Update last seen timestamp
             guestData.lastSeen = now;
 
+            console.log(`Existing guest user: ${userId}, count: ${totalRequests}`);
+
             if (totalRequests >= MAX_TOTAL_REQUESTS_GUEST) {
+                console.log(`Guest ${userId} exceeded limit: ${totalRequests}/${MAX_TOTAL_REQUESTS_GUEST}`);
                 return res.status(429).json({
                     error: 'You have reached the limit of 5 requests for guest users. Please login or register to continue using the AI chat.',
                     type: 'guest_quota_exceeded',
@@ -94,6 +128,7 @@ const checkRateLimit = (req, res, next) => {
             // Increment count and save
             guestData.count++;
             saveGuestRequests();
+            console.log(`Updated guest user: ${userId}, new count: ${guestData.count}`);
         }
 
         // Also track rate limiting for guests
@@ -112,10 +147,10 @@ const checkRateLimit = (req, res, next) => {
             }
         }
 
-        // Return guest usage stats using the same guestKey from above
+        // Return guest usage stats
         req.usageStats = {
             isGuest: true,
-            totalUsed: guestRequests[guestKey] ? guestRequests[guestKey].count : 0,
+            totalUsed: guestRequests[userId] ? guestRequests[userId].count : 0,
             maxTotal: MAX_TOTAL_REQUESTS_GUEST
         };
 
@@ -186,15 +221,26 @@ router.get('/', (req, res) => {
     const user = req.user;
     console.log('AI Chat Route - User from req.user:', user);
 
-    // Get chat history for this user
-    const userId = user ? user.id : req.ip;
+    // Get chat history for this user using the unique identifier
+    const userId = getUserIdentifier(req);
     const userHistory = chatHistory.get(userId) || [];
+
+    // Get guest usage stats if applicable
+    let guestStats = null;
+    if (!user) {
+        guestStats = {
+            totalUsed: guestRequests[userId] ? guestRequests[userId].count : 0,
+            maxTotal: MAX_TOTAL_REQUESTS_GUEST
+        };
+        console.log('Guest stats for', userId, ':', guestStats);
+    }
 
     // Render the chat page
     res.render('ai-chat', {
         user: user, // Pass the user to the view
         isAdmin: user && user.role === 'Admin',
-        chatHistory: userHistory
+        chatHistory: userHistory,
+        guestStats: guestStats
     });
 });
 
@@ -220,14 +266,14 @@ router.get('/logout', (req, res) => {
 
 // Route to get chat history
 router.get('/history', (req, res) => {
-    const userId = req.user ? req.user.id : req.ip;
+    const userId = getUserIdentifier(req);
     const userHistory = chatHistory.get(userId) || [];
     res.json({ history: userHistory });
 });
 
 // Route to delete chat history
 router.delete('/history', (req, res) => {
-    const userId = req.user ? req.user.id : req.ip;
+    const userId = getUserIdentifier(req);
     chatHistory.delete(userId);
     res.json({ success: true, message: 'Chat history deleted successfully' });
 });
@@ -247,7 +293,7 @@ router.post('/chat', checkCohereApiKey, checkRateLimit, async (req, res) => {
 
         // Get user from req.user (set by middleware in server.js)
         const user = req.user;
-        const userId = user ? user.id : req.ip;
+        const userId = getUserIdentifier(req);
         const username = user ? user.username : 'Guest';
 
         console.log('Chat endpoint - Using user:', user);

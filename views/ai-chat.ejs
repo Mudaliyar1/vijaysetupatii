@@ -118,7 +118,12 @@
 <body class="bg-dark-900 text-white transition-all duration-300 min-h-screen"
       data-is-guest="<%= user ? 'false' : 'true' %>"
       data-max-requests="<%= user ? 8 : 5 %>"
-      data-username="<%= user ? user.username : 'Guest' %>">
+      data-username="<%= user ? user.username : 'Guest' %>"
+      <% if (!user && typeof guestStats !== 'undefined' && guestStats) { %>
+      data-guest-used="<%= guestStats.totalUsed %>"
+      data-guest-max="<%= guestStats.maxTotal %>"
+      <% } %>
+      >
     <%- include('partials/sidebar', { isAdmin: false }) %>
 
     <!-- Theme Toggle Button -->
@@ -306,6 +311,22 @@
             totalUsed: 0,
             maxTotal: MAX_TOTAL_REQUESTS_GUEST
         };
+
+        // Get guest stats from data attributes if available
+        const guestUsed = document.body.getAttribute('data-guest-used');
+        if (guestUsed) {
+            usageStats.totalUsed = parseInt(guestUsed);
+            console.log('Initial guest stats from data attribute:', usageStats.totalUsed);
+        }
+
+        // Display initial guest stats if available
+        if (usageStats.isGuest && usageStats.totalUsed > 0) {
+            console.log('Initial guest stats:', usageStats);
+            // We'll call this after the DOM is loaded
+            document.addEventListener('DOMContentLoaded', () => {
+                updateUsageDisplay(usageStats);
+            });
+        }
 
         // Initialize the UI
         document.addEventListener('DOMContentLoaded', () => {
