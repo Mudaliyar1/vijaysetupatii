@@ -882,8 +882,9 @@
                 const detailMessage = document.createElement('div');
                 detailMessage.className = 'mt-2 text-gray-400 text-xs sm:text-sm';
                 detailMessage.innerHTML = `
-                    <p>As a guest user, you are limited to ${data.maxTotal} requests total.</p>
-                    <p class="mt-1">Create an account to get ${MAX_REQUESTS_PER_WINDOW_LOGGED} requests per minute!</p>
+                    <p>As a guest user, you are limited to <span class="text-primary-300 font-medium">${data.maxTotal}</span> requests total.</p>
+                    <p class="mt-1">You have used <span class="text-primary-300 font-medium">${data.totalUsed}</span> of <span class="text-primary-300 font-medium">${data.maxTotal}</span> requests.</p>
+                    <p class="mt-1">Create an account to get <span class="text-primary-300 font-medium">${MAX_REQUESTS_PER_WINDOW_LOGGED}</span> requests per minute!</p>
                 `;
                 errorContainer.appendChild(detailMessage);
 

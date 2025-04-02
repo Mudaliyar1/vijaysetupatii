@@ -10,7 +10,40 @@ const COHERE_API_URL = 'https://api.cohere.ai/v1/generate';
 
 // Rate limiting configuration
 const userRateLimits = new Map();
-const guestTotalRequests = new Map(); // Track total requests for guests
+
+// Use a more persistent approach for guest requests
+// This will be stored in a file for persistence across server restarts
+const fs = require('fs');
+const path = require('path');
+const guestRequestsFile = path.join(__dirname, '..', 'data', 'guest-requests.json');
+
+// Create the data directory if it doesn't exist
+if (!fs.existsSync(path.join(__dirname, '..', 'data'))) {
+    fs.mkdirSync(path.join(__dirname, '..', 'data'), { recursive: true });
+}
+
+// Load guest requests from file or initialize empty object
+let guestRequests = {};
+try {
+    if (fs.existsSync(guestRequestsFile)) {
+        const data = fs.readFileSync(guestRequestsFile, 'utf8');
+        guestRequests = JSON.parse(data);
+        console.log('Loaded guest requests from file:', Object.keys(guestRequests).length);
+    }
+} catch (error) {
+    console.error('Error loading guest requests file:', error);
+    guestRequests = {};
+}
+
+// Save guest requests to file
+const saveGuestRequests = () => {
+    try {
+        fs.writeFileSync(guestRequestsFile, JSON.stringify(guestRequests), 'utf8');
+    } catch (error) {
+        console.error('Error saving guest requests file:', error);
+    }
+};
+
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const MAX_REQUESTS_PER_WINDOW_LOGGED = 8; // 8 requests per minute for logged users
 const MAX_TOTAL_REQUESTS_GUEST = 5; // 5 requests total for guests
@@ -28,10 +61,25 @@ const checkRateLimit = (req, res, next) => {
 
     // Handle guest users (total limit of 5 requests)
     if (isGuest) {
-        if (!guestTotalRequests.has(userId)) {
-            guestTotalRequests.set(userId, 1);
+        // Use IP address for tracking guest requests
+        // For better tracking, we also store the user agent
+        const userAgent = req.headers['user-agent'] || 'unknown';
+        const guestKey = `${userId}|${userAgent}`;
+
+        if (!guestRequests[guestKey]) {
+            guestRequests[guestKey] = {
+                count: 1,
+                firstSeen: now,
+                lastSeen: now
+            };
+            // Save to file after updating
+            saveGuestRequests();
         } else {
-            const totalRequests = guestTotalRequests.get(userId);
+            const guestData = guestRequests[guestKey];
+            const totalRequests = guestData.count;
+
+            // Update last seen timestamp
+            guestData.lastSeen = now;
 
             if (totalRequests >= MAX_TOTAL_REQUESTS_GUEST) {
                 return res.status(429).json({
@@ -43,7 +91,9 @@ const checkRateLimit = (req, res, next) => {
                 });
             }
 
-            guestTotalRequests.set(userId, totalRequests + 1);
+            // Increment count and save
+            guestData.count++;
+            saveGuestRequests();
         }
 
         // Also track rate limiting for guests
@@ -62,10 +112,10 @@ const checkRateLimit = (req, res, next) => {
             }
         }
 
-        // Return guest usage stats
+        // Return guest usage stats using the same guestKey from above
         req.usageStats = {
             isGuest: true,
-            totalUsed: guestTotalRequests.get(userId),
+            totalUsed: guestRequests[guestKey] ? guestRequests[guestKey].count : 0,
             maxTotal: MAX_TOTAL_REQUESTS_GUEST
         };
 
@@ -183,7 +233,7 @@ router.delete('/history', (req, res) => {
 });
 
 // Middleware to check if API key is configured
-const checkCohereApiKey = (req, res, next) => {
+const checkCohereApiKey = (_req, res, next) => {
     if (!COHERE_API_KEY) {
         return res.status(500).json({ error: 'Cohere API key is not configured' });
     }
@@ -206,7 +256,7 @@ router.post('/chat', checkCohereApiKey, checkRateLimit, async (req, res) => {
             return res.status(400).json({ error: 'Message is required' });
         }
 
-        // Call Cohere API
+        // Call Cohere API with timeout
         const response = await axios.post(COHERE_API_URL, {
             prompt: `You are a helpful AI assistant. ${req.user ? `The user's name is ${username}. Address them by name in your response.` : ''} Please respond to: ${message}`,
             max_tokens: 300,
@@ -221,7 +271,8 @@ router.post('/chat', checkCohereApiKey, checkRateLimit, async (req, res) => {
             headers: {
                 'Authorization': `Bearer ${COHERE_API_KEY}`,
                 'Content-Type': 'application/json'
-            }
+            },
+            timeout: 15000 // 15 second timeout
         });
 
         const data = response.data;
@@ -260,6 +311,15 @@ router.post('/chat', checkCohereApiKey, checkRateLimit, async (req, res) => {
     } catch (error) {
         console.error('Error in chat endpoint:', error);
 
+        // Handle timeout errors
+        if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+            console.error('Cohere API request timed out:', error.message);
+            return res.status(503).json({
+                error: 'The AI service is taking too long to respond. Please try again.',
+                type: 'timeout_error'
+            });
+        }
+
         // Handle rate limit, quota errors and API errors
         if (error.response?.status === 404) {
             console.error('Cohere API endpoint not found. Please check the API configuration:', error.config?.url);
@@ -279,6 +339,15 @@ router.post('/chat', checkCohereApiKey, checkRateLimit, async (req, res) => {
             return res.status(503).json({
                 error: 'AI service configuration error. Please try again later.',
                 type: 'service_error'
+            });
+        }
+
+        // Handle network errors
+        if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED' || error.code === 'ECONNRESET') {
+            console.error('Network error connecting to Cohere API:', error.message);
+            return res.status(503).json({
+                error: 'Unable to connect to the AI service. Please check your internet connection and try again.',
+                type: 'network_error'
             });
         }
 
