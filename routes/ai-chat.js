@@ -6,14 +6,27 @@ const axios = require('axios');
 // We'll use a more secure approach to ensure privacy between different users
 const chatHistory = new Map();
 
-// Helper function to generate a unique user identifier that's more specific than just IP
+// Helper function to generate a unique user identifier
 const getUserIdentifier = (req) => {
     if (req.user) {
         // For logged-in users, use their user ID
         return `user_${req.user.id}`;
     } else {
-        // For guests, use a combination of IP and user agent hash
-        const ip = req.ip;
+        // For guests, use ONLY the IP address to ensure persistence across page refreshes
+        // Get the real IP address, considering potential proxies
+        const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip || '0.0.0.0';
+        return `guest_${ip}`;
+    }
+};
+
+// Helper function to generate a unique chat history identifier (more specific to prevent sharing)
+const getChatHistoryIdentifier = (req) => {
+    if (req.user) {
+        // For logged-in users, use their user ID
+        return `chat_user_${req.user.id}`;
+    } else {
+        // For guests, use a combination of IP and user agent hash for privacy
+        const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip || '0.0.0.0';
         const userAgent = req.headers['user-agent'] || 'unknown';
 
         // Create a simple hash of the user agent to add to the identifier
@@ -23,7 +36,7 @@ const getUserIdentifier = (req) => {
             userAgentHash |= 0; // Convert to 32bit integer
         }
 
-        return `guest_${ip}_${userAgentHash}`;
+        return `chat_guest_${ip}_${userAgentHash}`;
     }
 };
 
@@ -221,9 +234,12 @@ router.get('/', (req, res) => {
     const user = req.user;
     console.log('AI Chat Route - User from req.user:', user);
 
-    // Get chat history for this user using the unique identifier
+    // Get rate limit identifier (IP-based for guests)
     const userId = getUserIdentifier(req);
-    const userHistory = chatHistory.get(userId) || [];
+
+    // Get chat history for this user using the more specific identifier
+    const chatId = getChatHistoryIdentifier(req);
+    const userHistory = chatHistory.get(chatId) || [];
 
     // Get guest usage stats if applicable
     let guestStats = null;
@@ -266,15 +282,15 @@ router.get('/logout', (req, res) => {
 
 // Route to get chat history
 router.get('/history', (req, res) => {
-    const userId = getUserIdentifier(req);
-    const userHistory = chatHistory.get(userId) || [];
+    const chatId = getChatHistoryIdentifier(req);
+    const userHistory = chatHistory.get(chatId) || [];
     res.json({ history: userHistory });
 });
 
 // Route to delete chat history
 router.delete('/history', (req, res) => {
-    const userId = getUserIdentifier(req);
-    chatHistory.delete(userId);
+    const chatId = getChatHistoryIdentifier(req);
+    chatHistory.delete(chatId);
     res.json({ success: true, message: 'Chat history deleted successfully' });
 });
 
@@ -293,7 +309,13 @@ router.post('/chat', checkCohereApiKey, checkRateLimit, async (req, res) => {
 
         // Get user from req.user (set by middleware in server.js)
         const user = req.user;
+
+        // Get rate limit identifier (IP-based for guests)
         const userId = getUserIdentifier(req);
+
+        // Get chat history identifier (IP + user agent for guests)
+        const chatId = getChatHistoryIdentifier(req);
+
         const username = user ? user.username : 'Guest';
 
         console.log('Chat endpoint - Using user:', user);
@@ -360,7 +382,11 @@ router.post('/chat', checkCohereApiKey, checkRateLimit, async (req, res) => {
             timestamp: timestamp
         };
 
-        const userHistory = chatHistory.get(userId);
+        // Get or create chat history for this specific user/device
+        let userHistory = chatHistory.get(chatId) || [];
+        if (!chatHistory.has(chatId)) {
+            chatHistory.set(chatId, userHistory);
+        }
         userHistory.push(historyEntry);
 
         // Limit history size (optional)
