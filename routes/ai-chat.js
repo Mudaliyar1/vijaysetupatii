@@ -12,7 +12,7 @@ const getUserIdentifier = (req) => {
         // For logged-in users, use their user ID
         return `user_${req.user.id}`;
     } else {
-        // For guests, use ONLY the IP address to ensure persistence across page refreshes
+        // For guests, use a combination of IP and device-specific information
         // Get the real IP address, considering potential proxies
         let ip = req.headers['x-forwarded-for'] ||
                  req.headers['x-real-ip'] ||
@@ -31,10 +31,43 @@ const getUserIdentifier = (req) => {
             ip = ip.split(',')[0].trim();
         }
 
-        console.log('Identified guest with IP:', ip);
+        // Get device-specific information from user agent
+        const userAgent = req.headers['user-agent'] || 'unknown';
 
-        // Use a more stable identifier that won't change with page refreshes
-        return `guest_${ip}`;
+        // Extract device information from user agent
+        let deviceInfo = 'unknown';
+
+        // Check for mobile devices
+        if (userAgent.match(/Android/i)) {
+            deviceInfo = 'android';
+        } else if (userAgent.match(/iPhone|iPad|iPod/i)) {
+            deviceInfo = 'ios';
+        } else if (userAgent.match(/Windows Phone/i)) {
+            deviceInfo = 'windows_phone';
+        }
+        // Check for desktop OS
+        else if (userAgent.match(/Windows NT/i)) {
+            deviceInfo = 'windows';
+        } else if (userAgent.match(/Macintosh/i)) {
+            deviceInfo = 'mac';
+        } else if (userAgent.match(/Linux/i)) {
+            deviceInfo = 'linux';
+        }
+
+        // Create a simple hash of the user agent to add device-specific uniqueness
+        let userAgentHash = 0;
+        for (let i = 0; i < userAgent.length; i++) {
+            userAgentHash = ((userAgentHash << 5) - userAgentHash) + userAgent.charCodeAt(i);
+            userAgentHash |= 0; // Convert to 32bit integer
+        }
+
+        // Take only the last 6 digits of the hash for brevity
+        const shortHash = Math.abs(userAgentHash).toString().slice(-6);
+
+        console.log('Identified guest with IP:', ip, 'Device:', deviceInfo, 'Hash:', shortHash);
+
+        // Use a more device-specific identifier that will be different for each device
+        return `guest_${ip}_${deviceInfo}_${shortHash}`;
     }
 };
 
