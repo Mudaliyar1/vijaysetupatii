@@ -122,6 +122,7 @@
       <% if (!user && typeof guestStats !== 'undefined' && guestStats) { %>
       data-guest-used="<%= guestStats.totalUsed %>"
       data-guest-max="<%= guestStats.maxTotal %>"
+      data-guest-limit-exceeded="<%= guestLimitExceeded ? 'true' : 'false' %>"
       <% } %>
       >
     <%- include('partials/sidebar', { isAdmin: false }) %>
@@ -165,7 +166,19 @@
                 </button>
             </div>
         </div>
-        <div id="historyList" class="p-4 overflow-y-auto h-[calc(100%-4rem)] space-y-3">
+
+        <!-- Search Filter -->
+        <div class="px-4 pt-3 pb-2">
+            <div class="relative">
+                <input type="text" id="historySearch" placeholder="Search history..."
+                    class="w-full p-2 pl-8 rounded-lg bg-gray-800/70 text-white border border-gray-700 focus:border-primary-500/70 focus:ring-2 focus:ring-primary-500/20 focus:outline-none text-sm">
+                <svg class="w-4 h-4 absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+        </div>
+
+        <div id="historyList" class="p-4 overflow-y-auto h-[calc(100%-8rem)] space-y-3">
             <!-- History items will be added here dynamically -->
             <div class="text-center text-gray-500 py-8">
                 <svg class="w-12 h-12 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,12 +227,12 @@
                     <div class="inline-flex items-center px-3 py-1 rounded-full bg-gray-800/70 backdrop-blur-sm border border-gray-700">
                         <span class="text-gray-400">Requests: </span>
                         <span id="requestCount" class="ml-1 font-medium text-primary-300">0/8</span>
-                        <span class="ml-1 text-gray-500">per minute</span>
+                        <span class="ml-1 text-gray-500">per 2 minutes</span>
                     </div>
                 <% } else { %>
                     <div class="inline-flex items-center px-3 py-1 rounded-full bg-gray-800/70 backdrop-blur-sm border border-gray-700">
                         <span class="text-gray-400">Guest Requests: </span>
-                        <span id="requestCount" class="ml-1 font-medium text-primary-300">0/5</span>
+                        <span id="requestCount" class="ml-1 font-medium text-primary-300"><%= guestStats ? guestStats.totalUsed : 0 %>/<%= guestStats ? guestStats.maxTotal : 5 %></span>
                         <span class="ml-1 text-gray-500">total</span>
                     </div>
                 <% } %>
@@ -232,6 +245,36 @@
 
                 <!-- Messages Container -->
                 <div id="chatMessages" class="overflow-y-auto h-[calc(100vh-16rem)] sm:h-[calc(100vh-20rem)] mb-3 sm:mb-6 space-y-4 sm:space-y-6 relative z-10 px-1 sm:px-2 py-2 sm:py-4 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+                    <% if (!user && guestLimitExceeded) { %>
+                    <!-- Guest Limit Exceeded Error -->
+                    <div class="p-4 rounded-xl sm:rounded-2xl bg-red-500/20 border border-red-500/30 text-red-300 mb-4 animate-shake">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>You have reached the limit of 5 requests for guest users. Please login or register to continue using the AI chat.</span>
+                        </div>
+                        <div class="mt-2 text-gray-400 text-xs sm:text-sm">
+                            <p>As a guest user, you are limited to <span class="text-primary-300 font-medium"><%= guestStats.maxTotal %></span> requests total.</p>
+                            <p class="mt-1">You have used <span class="text-primary-300 font-medium"><%= guestStats.totalUsed %></span> of <span class="text-primary-300 font-medium"><%= guestStats.maxTotal %></span> requests.</p>
+                            <p class="mt-1">Create an account to get <span class="text-primary-300 font-medium">8</span> requests per 2 minutes!</p>
+                        </div>
+                        <div class="mt-3 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                            <a href="/login?redirect=/ai-chat" class="px-3 sm:px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors text-xs sm:text-sm flex items-center justify-center sm:justify-start">
+                                <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                                </svg>
+                                Login to Your Account
+                            </a>
+                            <a href="/register?redirect=/ai-chat" class="px-3 sm:px-4 py-2 bg-secondary-600 hover:bg-secondary-700 text-white rounded-lg transition-colors text-xs sm:text-sm flex items-center justify-center sm:justify-start">
+                                <svg class="w-3 h-3 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                                </svg>
+                                Create New Account
+                            </a>
+                        </div>
+                    </div>
+                    <% } %>
                     <div class="text-center py-8">
                         <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary-500/30 to-secondary-500/30 flex items-center justify-center backdrop-blur-sm border border-gray-700/50 animate-float">
                             <svg class="w-8 h-8 text-primary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,11 +292,13 @@
                         <div class="relative flex-1">
                             <input type="text" id="userInput"
                                 class="w-full p-3 sm:p-4 pr-10 sm:pr-12 rounded-xl sm:rounded-2xl bg-gray-700/50 text-white border border-gray-600/50 focus:border-primary-500/70 focus:ring-2 focus:ring-primary-500/20 focus:outline-none backdrop-blur-sm transition-all duration-300 placeholder-gray-400 text-sm sm:text-base"
-                                placeholder="Type your message...">
+                                placeholder="Type your message..."
+                                <% if (!user && guestLimitExceeded) { %>disabled<% } %>>
                             <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400" id="charCounter"></div>
                         </div>
                         <button id="sendButton"
-                                class="group relative overflow-hidden px-4 sm:px-6 py-3 rounded-xl sm:rounded-2xl bg-gradient-to-r from-primary-600 to-secondary-600 text-white shadow-lg hover:shadow-primary-500/20 transition-all duration-300 flex items-center justify-center min-w-[80px] sm:min-w-[100px] text-sm sm:text-base">
+                                class="group relative overflow-hidden px-4 sm:px-6 py-3 rounded-xl sm:rounded-2xl bg-gradient-to-r from-primary-600 to-secondary-600 text-white shadow-lg hover:shadow-primary-500/20 transition-all duration-300 flex items-center justify-center min-w-[80px] sm:min-w-[100px] text-sm sm:text-base <%= (!user && guestLimitExceeded) ? 'opacity-50 cursor-not-allowed' : '' %>"
+                                <%= (!user && guestLimitExceeded) ? 'disabled' : '' %>>
                             <!-- Button background glow effect -->
                             <div class="absolute inset-0 bg-gradient-to-r from-primary-400 to-secondary-400 opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
 
@@ -288,9 +333,9 @@
         const requestCount = document.getElementById('requestCount');
         const charCounter = document.getElementById('charCounter');
 
-        // Constants
-        const MAX_REQUESTS_PER_WINDOW_LOGGED = 8; // Same as server-side limit
-        const MAX_TOTAL_REQUESTS_GUEST = 5; // Same as server-side limit
+        // Constants - must match server-side values
+        const MAX_REQUESTS_PER_WINDOW_LOGGED = 8; // 8 requests per 2 minutes for logged users
+        const MAX_GUEST_REQUESTS = 5; // 5 requests total for guests
 
         // State variables
         let currentRequest = null;
@@ -303,14 +348,24 @@
             username: document.body.getAttribute('data-username')
         };
 
+        // Set guest limit exceeded flag from data attribute
+        window.appConfig.guestLimitExceeded = document.body.getAttribute('data-guest-limit-exceeded') === 'true';
+
         // Initialize usage stats
         let usageStats = {
             isGuest: window.appConfig.isGuest,
             used: 0,
-            max: window.appConfig.maxRequests,
+            max: window.appConfig.isGuest ? 5 : 8, // 5 for guests, 8 for logged-in users
             totalUsed: 0,
-            maxTotal: MAX_TOTAL_REQUESTS_GUEST
+            maxTotal: 5 // Hardcoded to ensure it's always 5 for guests
         };
+
+        // Get guest max from data attributes if available
+        const guestMax = document.body.getAttribute('data-guest-max');
+        if (guestMax) {
+            usageStats.maxTotal = parseInt(guestMax);
+            console.log('Initial guest max from data attribute:', usageStats.maxTotal);
+        }
 
         // Get guest stats from data attributes if available
         const guestUsed = document.body.getAttribute('data-guest-used');
@@ -370,15 +425,46 @@
                 html.classList.remove('light');
                 darkIcon.classList.remove('hidden');
                 lightIcon.classList.add('hidden');
-                document.body.classList.remove('bg-gray-100');
+                document.body.classList.remove('bg-gray-200');
                 document.body.classList.add('bg-dark-900');
+
+                // Restore dark mode styling
+                document.querySelectorAll('.bg-gray-300\/70').forEach(el => {
+                    el.classList.remove('bg-gray-300/70');
+                    el.classList.add('bg-gray-800/50');
+                });
+
+                // Update chat container background
+                const chatContainer = document.getElementById('chatContainer');
+                if (chatContainer) {
+                    chatContainer.classList.remove('bg-gray-300/50');
+                    chatContainer.classList.add('bg-gray-800/30');
+                }
             } else {
                 html.classList.remove('dark');
                 html.classList.add('light');
                 darkIcon.classList.add('hidden');
                 lightIcon.classList.remove('hidden');
                 document.body.classList.remove('bg-dark-900');
-                document.body.classList.add('bg-gray-100');
+                document.body.classList.add('bg-gray-200');
+
+                // Add a softer background color to all elements
+                document.querySelectorAll('.bg-gray-800, .bg-gray-800\/50, .bg-gray-800\/70').forEach(el => {
+                    el.classList.remove('bg-gray-800', 'bg-gray-800/50', 'bg-gray-800/70');
+                    el.classList.add('bg-gray-300/70');
+                });
+
+                // Update chat container background
+                const chatContainer = document.getElementById('chatContainer');
+                if (chatContainer) {
+                    chatContainer.classList.remove('bg-gray-800/30');
+                    chatContainer.classList.add('bg-gray-300/50');
+                }
+            }
+
+            // Update history panel theme if it's open
+            if (!historyPanel.classList.contains('-translate-x-full')) {
+                updateHistoryPanelTheme();
             }
         }
 
@@ -394,6 +480,9 @@
                 historyPanel.style.transition = 'transform 300ms ease-in';
                 historyPanel.classList.add('-translate-x-full');
 
+                // Show history button
+                historyButton.classList.remove('hidden');
+
                 // If on mobile, remove any overlay we might have added
                 if (window.innerWidth < 640) {
                     const overlay = document.getElementById('mobileHistoryOverlay');
@@ -407,6 +496,12 @@
                 // Open panel with animation
                 historyPanel.style.transition = 'transform 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275)';
                 historyPanel.classList.remove('-translate-x-full');
+
+                // Hide history button when panel is open
+                historyButton.classList.add('hidden');
+
+                // Apply current theme to history panel
+                updateHistoryPanelTheme();
 
                 // If on mobile, add a dark overlay behind the panel
                 if (window.innerWidth < 640) {
@@ -425,6 +520,43 @@
                 setTimeout(() => {
                     fetchChatHistory();
                 }, 300);
+            }
+        }
+
+        // Function to update history panel theme
+        function updateHistoryPanelTheme() {
+            const historyPanel = document.getElementById('historyPanel');
+            const historySearch = document.getElementById('historySearch');
+            const historyItems = document.querySelectorAll('#historyList > div:not(.text-center)');
+
+            if (isDarkMode) {
+                historyPanel.classList.remove('bg-white/90', 'bg-gray-200/90');
+                historyPanel.classList.add('bg-gray-900/80');
+
+                if (historySearch) {
+                    historySearch.classList.remove('bg-gray-200', 'text-gray-800');
+                    historySearch.classList.add('bg-gray-800/70', 'text-white');
+                }
+
+                // Update history items
+                historyItems.forEach(item => {
+                    item.classList.remove('bg-gray-300/50', 'hover:bg-gray-400/50', 'border-gray-400/50');
+                    item.classList.add('bg-gray-800/50', 'hover:bg-gray-700/50', 'border-gray-700/50');
+                });
+            } else {
+                historyPanel.classList.remove('bg-gray-900/80');
+                historyPanel.classList.add('bg-gray-200/90');
+
+                if (historySearch) {
+                    historySearch.classList.remove('bg-gray-800/70', 'text-white');
+                    historySearch.classList.add('bg-gray-200', 'text-gray-800');
+                }
+
+                // Update history items
+                historyItems.forEach(item => {
+                    item.classList.remove('bg-gray-800/50', 'hover:bg-gray-700/50', 'border-gray-700/50');
+                    item.classList.add('bg-gray-300/50', 'hover:bg-gray-400/50', 'border-gray-400/50');
+                });
             }
         }
 
@@ -474,23 +606,63 @@
                 if (data.history && data.history.length > 0) {
                     chatHistory = data.history;
                     renderChatHistory();
+                    console.log('Loaded chat history:', chatHistory.length, 'entries');
+
+                    // Show history panel if we have history
+                    if (chatHistory.length > 0 && !historyPanel.classList.contains('translate-x-0')) {
+                        toggleHistoryBtn.classList.remove('hidden');
+                    }
+                } else {
+                    console.log('No chat history found');
                 }
             } catch (error) {
                 console.error('Error fetching chat history:', error);
             }
         }
 
+        // Add event listener for history search
+        const historySearch = document.getElementById('historySearch');
+        historySearch.addEventListener('input', function() {
+            renderChatHistory(this.value.toLowerCase());
+        });
+
         // Render chat history in the panel
-        function renderChatHistory() {
+        function renderChatHistory(searchTerm = '') {
             if (chatHistory.length === 0) {
                 return;
             }
 
             historyList.innerHTML = '';
 
-            chatHistory.forEach((entry, index) => {
+            // Filter history based on search term
+            const filteredHistory = searchTerm ?
+                chatHistory.filter(entry =>
+                    entry.userMessage.toLowerCase().includes(searchTerm) ||
+                    entry.aiResponse.toLowerCase().includes(searchTerm)
+                ) :
+                chatHistory;
+
+            // Show no results message if filtered history is empty
+            if (filteredHistory.length === 0 && searchTerm) {
+                historyList.innerHTML = `
+                    <div class="text-center text-gray-500 py-8 animate-fade-in">
+                        <svg class="w-12 h-12 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <p>No results found for "${searchTerm}"</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filteredHistory.forEach((entry, index) => {
                 const historyItem = document.createElement('div');
-                historyItem.className = 'p-2 sm:p-3 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/50 transition-colors cursor-pointer animate-fade-in mb-2';
+                // Apply appropriate styling based on current theme
+                if (isDarkMode) {
+                    historyItem.className = 'p-2 sm:p-3 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/50 transition-colors cursor-pointer animate-fade-in mb-2';
+                } else {
+                    historyItem.className = 'p-2 sm:p-3 rounded-lg bg-gray-300/50 hover:bg-gray-400/50 border border-gray-400/50 transition-colors cursor-pointer animate-fade-in mb-2';
+                }
                 historyItem.style.animationDelay = `${index * 50}ms`;
 
                 const date = new Date(entry.timestamp);
@@ -589,6 +761,50 @@
                 glassOverlay.className = 'absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-br from-gray-700/10 to-gray-900/10 pointer-events-none';
                 messageElement.style.position = 'relative';
                 messageElement.appendChild(glassOverlay);
+            }
+
+            // Process links in AI responses
+            if (!isUser) {
+                // Special handling for Vijay's social media links
+                content = content.replace(/Instagram:\s*(https?:\/\/www\.instagram\.com\/ft_raise_59)\s*(?:\(@ft_raise_59\))?/gi,
+                    'Instagram: <a href="https://www.instagram.com/ft_raise_59" target="_blank" class="text-blue-500 hover:underline">@ft_raise_59</a>');
+
+                content = content.replace(/GitHub:\s*(https?:\/\/github\.com\/Mudaliyar1\/)\s*(?:\(Mudaliyar1\))?/gi,
+                    'GitHub: <a href="https://github.com/Mudaliyar1/" target="_blank" class="text-blue-500 hover:underline">Mudaliyar1</a>');
+
+                content = content.replace(/Email:\s*(vijaymudaliyar224@gmail\.com)/gi,
+                    'Email: <a href="mailto:vijaymudaliyar224@gmail.com" class="text-blue-500 hover:underline">vijaymudaliyar224@gmail.com</a>');
+
+                // Also handle just the handles/emails without labels
+                content = content.replace(/(?<!href=")https?:\/\/www\.instagram\.com\/ft_raise_59/gi,
+                    '<a href="https://www.instagram.com/ft_raise_59" target="_blank" class="text-blue-500 hover:underline">https://www.instagram.com/ft_raise_59</a>');
+
+                content = content.replace(/(?<!href=")https?:\/\/github\.com\/Mudaliyar1\//gi,
+                    '<a href="https://github.com/Mudaliyar1/" target="_blank" class="text-blue-500 hover:underline">https://github.com/Mudaliyar1/</a>');
+
+                content = content.replace(/(?<!href="|mailto:)vijaymudaliyar224@gmail\.com/gi,
+                    '<a href="mailto:vijaymudaliyar224@gmail.com" class="text-blue-500 hover:underline">vijaymudaliyar224@gmail.com</a>');
+
+                // Handle @ft_raise_59 and Mudaliyar1 mentions
+                content = content.replace(/(?<!\w)@ft_raise_59(?!\w)/gi,
+                    '<a href="https://www.instagram.com/ft_raise_59" target="_blank" class="text-blue-500 hover:underline">@ft_raise_59</a>');
+
+                content = content.replace(/(?<!\w)Mudaliyar1(?!\w)/gi,
+                    '<a href="https://github.com/Mudaliyar1/" target="_blank" class="text-blue-500 hover:underline">Mudaliyar1</a>');
+
+                // Convert other URLs to clickable links
+                content = content.replace(/(?<!href=")https?:\/\/[^\s<"']+/g, function(url) {
+                    return `<a href="${url}" target="_blank" class="text-blue-400 hover:underline">${url}</a>`;
+                });
+
+                // Convert other email addresses to clickable mailto links
+                content = content.replace(/(?<!href="mailto:|\w)([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(?!\w|<\/a>)/g, function(email) {
+                    return `<a href="mailto:${email}" class="text-blue-400 hover:underline">${email}</a>`;
+                });
+
+                // Remove any HTML tag syntax that might have been included in the AI response
+                content = content.replace(/&lt;a\s+href=.*?&gt;|&lt;\/a&gt;/g, '');
+                content = content.replace(/<a\s+href=.*?>|<\/a>/g, '');
             }
 
             messageElement.innerHTML = `<div class="relative z-10">${content}</div>`;
@@ -820,6 +1036,12 @@
             const userMessage = userInput.value.trim();
             if (!userMessage || currentRequest) return;
 
+            // Check if guest limit is exceeded
+            if (window.appConfig.isGuest && window.appConfig.guestLimitExceeded) {
+                showNotification('You have reached the guest request limit. Please login or register to continue.', 'error');
+                return;
+            }
+
             // Display user message
             displayMessage(userMessage, true);
             userInput.value = '';
@@ -847,7 +1069,18 @@
                 // Update usage stats
                 if (data.usageStats) {
                     usageStats = data.usageStats;
-                    updateRequestCounter(usageStats);
+                    // Update the request counter display
+                    if (requestCount) {
+                        if (usageStats.isGuest) {
+                            // For guests, show totalUsed/maxTotal (e.g., 3/5)
+                            requestCount.textContent = `${usageStats.totalUsed}/${usageStats.maxTotal}`;
+                            console.log(`Updated guest request counter: ${usageStats.totalUsed}/${usageStats.maxTotal}`);
+                        } else {
+                            // For logged-in users, show used/max (e.g., 2/8)
+                            requestCount.textContent = `${usageStats.used}/${usageStats.max}`;
+                            console.log(`Updated user request counter: ${usageStats.used}/${usageStats.max}`);
+                        }
+                    }
                 }
 
                 // Handle error response
@@ -888,12 +1121,23 @@
             // Error message
             const errorMessage = document.createElement('div');
             errorMessage.className = 'flex items-center';
-            errorMessage.innerHTML = `
-                <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <span>${data.error}</span>
-            `;
+
+            // Check if the error message contains HTML
+            if (data.html) {
+                errorMessage.innerHTML = `
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>${data.error}</span>
+                `;
+            } else {
+                errorMessage.innerHTML = `
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>${data.error}</span>
+                `;
+            }
 
             errorContainer.appendChild(errorMessage);
 
@@ -905,7 +1149,7 @@
                 detailMessage.innerHTML = `
                     <p>As a guest user, you are limited to <span class="text-primary-300 font-medium">${data.maxTotal}</span> requests total.</p>
                     <p class="mt-1">You have used <span class="text-primary-300 font-medium">${data.totalUsed}</span> of <span class="text-primary-300 font-medium">${data.maxTotal}</span> requests.</p>
-                    <p class="mt-1">Create an account to get <span class="text-primary-300 font-medium">${MAX_REQUESTS_PER_WINDOW_LOGGED}</span> requests per minute!</p>
+                    <p class="mt-1">Create an account to get <span class="text-primary-300 font-medium">${MAX_REQUESTS_PER_WINDOW_LOGGED}</span> requests per 2 minutes!</p>
                 `;
                 errorContainer.appendChild(detailMessage);
 
