@@ -15,4 +15,8 @@ const maintenanceVisitorSchema = new mongoose.Schema({
     referrer: String
 }, { timestamps: true });
 
+<<<<<<< Updated upstream
 module.exports = mongoose.model('MaintenanceVisitor', maintenanceVisitorSchema);
+=======
+module.exports = mongoose.model('MaintenanceVisitor', maintenanceVisitorSchema);
+>>>>>>> Stashed changes

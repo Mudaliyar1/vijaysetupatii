@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 const mongoose = require('mongoose');
 const MaintenanceMode = require('../models/MaintenanceMode');
 const MaintenanceVisitor = require('../models/MaintenanceVisitor');
@@ -84,6 +85,31 @@ const maintenanceCheck = async (req, res, next) => {
             // If timeout occurs, allow the request to proceed to avoid blocking users
             next();
         }
+=======
+const MaintenanceMode = require('../models/MaintenanceMode');
+const MaintenanceVisitor = require('../models/MaintenanceVisitor');
+const requestIp = require('request-ip');
+
+const maintenanceCheck = async (req, res, next) => {
+    try {
+        // Always bypass maintenance check for admin paths and admin users
+        if (req.session?.user?.role === 'Admin' || req.path.startsWith('/admin/')) {
+            return next();
+        }
+
+        // For non-admin routes and users, check maintenance mode
+        const maintenance = await MaintenanceMode.findOne({ isEnabled: true });
+        
+        if (maintenance?.isEnabled) {
+            const allowedPaths = ['/login', '/maintenance', '/auth/login', '/setup-workspace'];
+            if (allowedPaths.includes(req.path)) {
+                return next();
+            }
+            return res.redirect('/maintenance');
+        }
+
+        next();
+>>>>>>> Stashed changes
     } catch (error) {
         console.error('Maintenance check error:', error);
         // In case of any error, allow the request to proceed

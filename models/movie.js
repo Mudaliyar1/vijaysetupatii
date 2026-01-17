@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const movieSchema = new mongoose.Schema({
+<<<<<<< Updated upstream
     title: {
         type: String,
         required: true,
@@ -54,5 +55,24 @@ const movieSchema = new mongoose.Schema({
         default: Date.now
     }
 }, { timestamps: true });
+=======
+    title: String,
+    description: String,
+    releaseDate: Date,
+    genre: String,
+    duration: Number, // Duration in minutes
+    image: String, // URL of the movie poster
+    director: String,
+    cast: [String], // Array of cast members
+    proposedChanges: {
+        type: Object,
+        default: null
+    },
+    approved: {
+        type: Boolean,
+        default: true
+    }
+});
+>>>>>>> Stashed changes
 
 module.exports = mongoose.model('Movie', movieSchema);

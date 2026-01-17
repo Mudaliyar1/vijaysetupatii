@@ -138,4 +138,8 @@ maintenanceModeSchema.methods.formatDuration = function() {
     return hours > 0 ? `${hours}h ${minutes}m` : `${minutes} minutes`;
 };
 
+<<<<<<< Updated upstream
 module.exports = mongoose.model('MaintenanceMode', maintenanceModeSchema);
+=======
+module.exports = mongoose.model('MaintenanceMode', maintenanceModeSchema);
+>>>>>>> Stashed changes

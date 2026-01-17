@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
+<<<<<<< Updated upstream
 const Movie = require('../models/movie'); // Import Movie model
+=======
+const Movie = require('../models/Movie'); // Import Movie model
+>>>>>>> Stashed changes
 const Award = require('../models/Award'); // Import Award model
 const Message = require('../models/Message'); // Import Message model
 const User = require('../models/User'); // Import User model

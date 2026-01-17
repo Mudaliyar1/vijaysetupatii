@@ -2,7 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { isAuthenticated, isModerator } = require('../middleware/auth');
 const Request = require('../models/Request');
+<<<<<<< Updated upstream
 const Movie = require('../models/movie');
+=======
+const Movie = require('../models/Movie');
+>>>>>>> Stashed changes
 const Award = require('../models/Award');
 const Message = require('../models/Message');
 
@@ -156,6 +160,7 @@ router.get('/movies', isAuthenticated, isModerator, async (req, res) => {
             createdBy: req.session.user.id,
             type: { $in: ['movie_add', 'movie_edit', 'movie_delete'] },
             status: 'Pending'
+<<<<<<< Updated upstream
         });
 
         res.render('moderator/movies', {
@@ -166,6 +171,198 @@ router.get('/movies', isAuthenticated, isModerator, async (req, res) => {
     } catch (error) {
         console.error('Error loading movies:', error);
         res.status(500).send('Error loading movies');
+=======
+        });
+
+        res.render('moderator/movies', {
+            movies,
+            pendingRequests,
+            user: req.session.user
+        });
+    } catch (error) {
+        console.error('Error loading movies:', error);
+        res.status(500).send('Error loading movies');
+    }
+});
+
+router.get('/movies/add', isAuthenticated, isModerator, (req, res) => {
+    res.render('moderator/add-movie', { user: req.session.user });
+});
+
+router.post('/movies', isAuthenticated, isModerator, async (req, res) => {
+    try {
+        const movieData = { ...req.body };
+        
+        // Handle cast array
+        if (typeof movieData.cast === 'string') {
+            movieData.cast = movieData.cast.split(',').map(item => item.trim());
+        }
+        
+        // Handle language
+        if (movieData.language === 'Other') {
+            movieData.language = movieData.otherLanguage;
+            delete movieData.otherLanguage;
+        }
+
+        const request = new Request({
+            type: 'movie_add',
+            data: movieData,
+            status: 'Pending',
+            createdBy: req.session.user.id
+        });
+
+        await request.save();
+        res.redirect('/moderator/requests');
+    } catch (error) {
+        console.error('Error creating movie request:', error);
+        res.status(500).render('error', {
+            message: 'Error creating movie request',
+            error: error.message
+        });
+    }
+});
+
+router.post('/movies/edit-request', isAuthenticated, isModerator, async (req, res) => {
+    try {
+        const { movieId, updates } = req.body;
+        const request = new Request({
+            type: 'movie_edit',
+            data: {
+                movieId,
+                updates
+            },
+            status: 'Pending',
+            createdBy: req.session.user.id
+        });
+        await request.save();
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Error creating edit request' });
+    }
+});
+
+router.post('/movies/delete-request', isAuthenticated, isModerator, async (req, res) => {
+    try {
+        const { movieId } = req.body;
+        const request = new Request({
+            type: 'movie_delete',
+            data: { movieId },
+            status: 'Pending',
+            createdBy: req.session.user.id
+        });
+        await request.save();
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Error creating delete request' });
+    }
+});
+
+router.get('/awards', isAuthenticated, isModerator, async (req, res) => {
+    try {
+        const awards = await Award.find().sort('-createdAt');
+        const pendingRequests = await Request.find({ 
+            createdBy: req.session.user.id, 
+            type: { $in: ['award_add', 'award_edit', 'award_delete'] },
+            status: 'Pending'
+        });
+
+        res.render('moderator/awards', { 
+            awards, 
+            pendingRequests,
+            user: req.session.user 
+        });
+    } catch (error) {
+        console.error('Error loading awards:', error);
+        res.status(500).send('Error loading awards');
+    }
+});
+
+router.get('/awards/add', isAuthenticated, isModerator, (req, res) => {
+    res.render('moderator/add-award', { user: req.session.user });
+});
+
+router.post('/awards', isAuthenticated, isModerator, async (req, res) => {
+    try {
+        const request = new Request({
+            type: 'award_add',
+            data: req.body,
+            status: 'Pending',
+            createdBy: req.session.user.id
+        });
+        await request.save();
+        res.redirect('/moderator/requests');
+    } catch (error) {
+        res.status(500).send('Error creating award request');
+    }
+});
+
+router.post('/awards/edit-request', isAuthenticated, isModerator, async (req, res) => {
+    try {
+        const { awardId, updates } = req.body;
+        const request = new Request({
+            type: 'award_edit',
+            data: {
+                awardId,
+                updates
+            },
+            status: 'Pending',
+            createdBy: req.session.user.id
+        });
+        await request.save();
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Award edit request error:', error);
+        res.status(500).json({ success: false, error: 'Error creating edit request' });
+    }
+});
+
+router.post('/awards/delete-request', isAuthenticated, isModerator, async (req, res) => {
+    try {
+        const { awardId } = req.body;
+        const request = new Request({
+            type: 'award_delete',
+            data: { awardId },
+            status: 'Pending',
+            createdBy: req.session.user.id
+        });
+        await request.save();
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Award delete request error:', error);
+        res.status(500).json({ success: false, error: 'Error creating delete request' });
+    }
+});
+
+router.get('/messages', isAuthenticated, isModerator, async (req, res) => {
+    try {
+        const messages = await Message.find().sort('-createdAt');
+        res.render('moderator/messages', { 
+            user: req.session.user,
+            messages 
+        });
+    } catch (error) {
+        console.error('Error loading messages:', error);
+        res.status(500).send('Error loading messages');
+    }
+});
+
+router.post('/requests/:id/delete', isAuthenticated, isModerator, async (req, res) => {
+    try {
+        const request = await Request.findOne({ 
+            _id: req.params.id,
+            createdBy: req.session.user.id
+        });
+        
+        if (!request) {
+            return res.status(404).json({ success: false, error: 'Request not found' });
+        }
+
+        await Request.deleteOne({ _id: req.params.id });
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Request deletion error:', error);
+        res.status(500).json({ success: false, error: 'Error deleting request' });
+>>>>>>> Stashed changes
     }
 });
 

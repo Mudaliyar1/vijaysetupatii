@@ -19,4 +19,8 @@ function attachJsonHelper(req, res, next) {
     next();
 }
 
+<<<<<<< Updated upstream
 module.exports = attachJsonHelper;
+=======
+module.exports = attachJsonHelper;
+>>>>>>> Stashed changes

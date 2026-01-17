@@ -9,7 +9,11 @@ function isAdmin(req, res, next) {
     if (req.session && req.session.user && req.session.user.role === 'Admin') {
         return next();
     }
+<<<<<<< Updated upstream
     res.redirect('/login');
+=======
+    res.status(403).send('Access denied');
+>>>>>>> Stashed changes
 }
 
 function isModerator(req, res, next) {
@@ -31,4 +35,8 @@ function isUser(req, res, next) {
     res.redirect('/login');
 }
 
+<<<<<<< Updated upstream
 module.exports = { isAuthenticated, isAdmin, isModerator, isUser };
+=======
+module.exports = { isAuthenticated, isAdmin, isModerator, isUser };
+>>>>>>> Stashed changes

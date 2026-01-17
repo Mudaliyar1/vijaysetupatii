@@ -76,4 +76,8 @@ maintenanceLoginAttemptSchema.methods.formatDuration = function() {
     return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 };
 
+<<<<<<< Updated upstream
 module.exports = mongoose.model('MaintenanceLoginAttempt', maintenanceLoginAttemptSchema);
+=======
+module.exports = mongoose.model('MaintenanceLoginAttempt', maintenanceLoginAttemptSchema);
+>>>>>>> Stashed changes

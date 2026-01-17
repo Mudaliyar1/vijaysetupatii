@@ -4,13 +4,17 @@ const User = require('../models/User');
 const MaintenanceMode = require('../models/MaintenanceMode');
 const MaintenanceLoginAttempt = require('../models/MaintenanceLoginAttempt');
 const requestIp = require('request-ip');
+<<<<<<< Updated upstream
 const bcrypt = require('bcrypt');
+=======
+>>>>>>> Stashed changes
 
 // Update the login route
 router.post('/login', async (req, res) => {
     try {
         console.log('Login attempt received for username:', req.body.username);
         const { username, password } = req.body;
+<<<<<<< Updated upstream
 
         const user = await User.findOne({ username });
         if (!user) {
@@ -18,28 +22,66 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({
                 success: false,
                 error: 'Invalid username or password'
+=======
+        const [user, maintenance] = await Promise.all([
+            User.findOne({ username }),
+            MaintenanceMode.findOne({ isEnabled: true })
+        ]);
+
+        // Check maintenance mode first
+        if (maintenance?.isEnabled) {
+            // Record login attempt
+            await MaintenanceLoginAttempt.create({
+                username,
+                role: user?.role || 'Unknown',
+                ip: requestIp.getClientIp(req),
+                userAgent: req.headers['user-agent'],
+                success: false,
+                maintenanceId: maintenance._id
+>>>>>>> Stashed changes
             });
+
+            if (!user || user.role !== 'Admin') {
+                return res.status(403).json({
+                    success: false,
+                    error: 'System is under maintenance. Only administrators can access.',
+                    maintenance: true,
+                    countdown: 5,
+                    redirectUrl: '/maintenance'
+                });
+            }
         }
 
+<<<<<<< Updated upstream
         // Compare password using bcrypt compare
         const isMatch = await bcrypt.compare(password, user.password);
         console.log('Password match result:', isMatch);
 
         if (!isMatch) {
             console.log('Password mismatch for user:', username);
+=======
+        if (!user || user.password !== password) {
+>>>>>>> Stashed changes
             return res.status(401).json({
                 success: false,
                 error: 'Invalid username or password'
             });
         }
 
+<<<<<<< Updated upstream
         // Create user object
         const userInfo = {
             id: user._id.toString(),
+=======
+        // Set session data
+        req.session.user = {
+            id: user._id,
+>>>>>>> Stashed changes
             username: user.username,
             role: user.role
         };
 
+<<<<<<< Updated upstream
         // Set user in session
         req.session.user = userInfo;
 
@@ -74,6 +116,26 @@ router.post('/login', async (req, res) => {
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ success: false, error: 'Server error occurred' });
+=======
+        // For admin users
+        if (user.role === 'Admin') {
+            return res.json({
+                success: true,
+                redirectUrl: '/setup-workspace'
+            });
+        }
+
+        res.json({
+            success: true,
+            redirectUrl: '/profile'
+        });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Server error occurred' 
+        });
+>>>>>>> Stashed changes
     }
 });
 
@@ -194,6 +256,7 @@ router.get('/ping', (req, res) => {
     res.json({ success: true, timestamp: Date.now() });
 });
 
+<<<<<<< Updated upstream
 // Direct login endpoint for testing
 router.get('/direct-login', async (req, res) => {
     try {
@@ -232,3 +295,25 @@ router.get('/direct-login', async (req, res) => {
 });
 
 module.exports = router;
+=======
+// Add maintenance check endpoint
+router.get('/maintenance/status', async (req, res) => {
+    try {
+        const maintenance = await MaintenanceMode.findOne({ isEnabled: true });
+        if (maintenance) {
+            await maintenance.autoStop();
+        }
+        
+        res.json({
+            inMaintenance: maintenance?.isEnabled || false,
+            endTime: maintenance?.calculateEndTime() || null,
+            message: maintenance?.message || '',
+            reason: maintenance?.reason || ''
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Error checking maintenance status' });
+    }
+});
+
+module.exports = router;
+>>>>>>> Stashed changes

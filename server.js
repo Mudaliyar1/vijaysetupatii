@@ -7,8 +7,11 @@ const path = require('path');
 const methodOverride = require('method-override');
 const requestIp = require('request-ip'); // Add this line
 const { MaintenanceMode } = require('./models'); // Add this import
+<<<<<<< Updated upstream
 const bcrypt = require('bcrypt'); // Add at the top with other imports
 const cookieParser = require('cookie-parser'); // Add cookie parser
+=======
+>>>>>>> Stashed changes
 
 const app = express();
 
@@ -18,7 +21,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
 app.use(bodyParser.json()); // Add this line as backup
 app.use(bodyParser.urlencoded({ extended: true }));
+<<<<<<< Updated upstream
 app.use(cookieParser()); // Add cookie parser middleware
+=======
+>>>>>>> Stashed changes
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 
@@ -29,6 +35,7 @@ const responseHelper = require('./middleware/responseHelper');
 // Add response helpers (single instance)
 app.use(responseHelper);
 
+<<<<<<< Updated upstream
 // This middleware will be moved after session setup
 
 // Add security routes
@@ -87,6 +94,26 @@ app.use(session({
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false, // Changed to false for better performance
     saveUninitialized: false, // Changed to false for better performance
+=======
+// Add maintenance check middleware
+app.use(maintenanceCheck);
+
+// Add maintenance auto-stop check interval
+const MAINTENANCE_CHECK_INTERVAL = 30000; // 30 seconds
+setInterval(async () => {
+    try {
+        await MaintenanceMode.checkAndStopExpired();
+    } catch (error) {
+        console.error('Maintenance auto-stop check error:', error);
+    }
+}, MAINTENANCE_CHECK_INTERVAL);
+
+// Session setup
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    resave: false,
+    saveUninitialized: false,
+>>>>>>> Stashed changes
     cookie: {
         secure: false, // Set to false for development
         sameSite: 'lax',
@@ -94,6 +121,7 @@ app.use(session({
     }
 }));
 
+<<<<<<< Updated upstream
 // Debug middleware to log session data (only in development)
 app.use((req, res, next) => {
     // Only log for important routes to reduce console spam
@@ -104,6 +132,17 @@ app.use((req, res, next) => {
     }
     next();
 });
+=======
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => console.log('MongoDB connected'))
+  .catch(err => console.log(err));
+
+// MongoDB models
+const Request = require('./models/Request'); // Model for Moderator requests
+>>>>>>> Stashed changes
 
 // Middleware to make session user available as req.user and res.locals.user
 app.use((req, res, next) => {
@@ -241,8 +280,15 @@ app.post('/login', async (req, res) => {
             });
         }
 
+<<<<<<< Updated upstream
         const isValidPassword = await bcrypt.compare(password, user.password);
         if (!isValidPassword) {
+=======
+        const User = require('./models/User');
+        const user = await User.findOne({ username });
+
+        if (!user || user.password !== password) {
+>>>>>>> Stashed changes
             return res.status(401).json({
                 success: false,
                 error: 'Invalid username or password'
@@ -334,9 +380,15 @@ app.get('/setup-workspace', isAuthenticated, (req, res) => {
     }
 
     const redirectUrl = req.session.user.role === 'Admin' ? '/admin/dashboard' : '/moderator/dashboard';
+<<<<<<< Updated upstream
     res.render('setup-workspace', {
         user: req.session.user,  // Pass user data to template
         redirectUrl
+=======
+    res.render('setup-workspace', { 
+        user: req.session.user,  // Pass user data to template
+        redirectUrl 
+>>>>>>> Stashed changes
     });
 });
 

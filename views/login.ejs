@@ -136,6 +136,7 @@
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+<<<<<<< Updated upstream
 
             try {
                 const formData = new FormData(e.target);
@@ -147,6 +148,11 @@
                     formData.append('redirect', redirect);
                 }
 
+=======
+            
+            try {
+                const formData = new FormData(e.target);
+>>>>>>> Stashed changes
                 const response = await fetch('/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -156,6 +162,7 @@
                 const data = await response.json();
 
                 if (data.success) {
+<<<<<<< Updated upstream
                     // Show loading indicator
                     const loginBtn = document.getElementById('loginBtn');
                     const buttonText = document.getElementById('buttonText');
@@ -169,6 +176,9 @@
                     setTimeout(() => {
                         window.location.href = data.redirectUrl;
                     }, 100);
+=======
+                    window.location.href = data.redirectUrl;
+>>>>>>> Stashed changes
                 } else if (data.maintenance) {
                     showMaintenanceError(data);
                 } else {
@@ -180,11 +190,15 @@
         });
 
         function showMaintenanceError(data) {
+<<<<<<< Updated upstream
             // Create error message element
+=======
+>>>>>>> Stashed changes
             const errorDiv = document.createElement('div');
             errorDiv.className = 'bg-red-500/20 text-red-400 p-4 rounded-lg mb-4';
             errorDiv.innerHTML = `
                 <p class="font-bold mb-2">Access Denied - System Under Maintenance</p>
+<<<<<<< Updated upstream
                 <p class="mb-2">${data.error || 'System is currently under maintenance'}</p>
                 <p class="countdown">Redirecting to maintenance page in <span id="countdown">${data.countdown || 5}</span> seconds...</p>
             `;
@@ -197,10 +211,18 @@
             }
 
             // Remove any existing error messages
+=======
+                <p class="mb-2">${data.error}</p>
+                <p class="countdown">Redirecting to maintenance page in <span id="countdown">${data.countdown}</span> seconds...</p>
+            `;
+            
+            const form = document.getElementById('loginForm');
+>>>>>>> Stashed changes
             const existingError = form.querySelector('.bg-red-500\\/20');
             if (existingError) {
                 existingError.remove();
             }
+<<<<<<< Updated upstream
 
             // Add the new error message
             form.insertBefore(errorDiv, form.firstChild);
@@ -216,6 +238,11 @@
 
             // Set up countdown
             let count = data.countdown || 5;
+=======
+            form.insertBefore(errorDiv, form.firstChild);
+
+            let count = data.countdown;
+>>>>>>> Stashed changes
             const countdownElement = document.getElementById('countdown');
             const interval = setInterval(() => {
                 count--;
@@ -224,12 +251,17 @@
                 }
                 if (count <= 0) {
                     clearInterval(interval);
+<<<<<<< Updated upstream
                     window.location.href = data.redirectUrl || '/maintenance';
+=======
+                    window.location.href = data.redirectUrl;
+>>>>>>> Stashed changes
                 }
             }, 1000);
         }
 
         function showError(message) {
+<<<<<<< Updated upstream
             // Create error message element
             const errorDiv = document.createElement('div');
             errorDiv.className = 'bg-red-500/20 text-red-400 p-4 rounded-lg mb-4';
@@ -243,10 +275,18 @@
             }
 
             // Remove any existing error messages
+=======
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'bg-red-500/20 text-red-400 p-4 rounded-lg mb-4';
+            errorDiv.textContent = message;
+            
+            const form = document.getElementById('loginForm');
+>>>>>>> Stashed changes
             const existingError = form.querySelector('.bg-red-500\\/20');
             if (existingError) {
                 existingError.remove();
             }
+<<<<<<< Updated upstream
 
             // Add the new error message
             form.insertBefore(errorDiv, form.firstChild);
@@ -259,6 +299,9 @@
             if (loginBtn) loginBtn.disabled = false;
             if (buttonText) buttonText.textContent = 'Login';
             if (loadingSpinner) loadingSpinner.classList.add('hidden');
+=======
+            form.insertBefore(errorDiv, form.firstChild);
+>>>>>>> Stashed changes
         }
     </script>
 </body>

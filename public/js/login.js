@@ -22,4 +22,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         errorDiv.textContent = error.message;
         e.target.insertBefore(errorDiv, e.target.firstChild);
     }
+<<<<<<< Updated upstream
 });
+=======
+});
+>>>>>>> Stashed changes
